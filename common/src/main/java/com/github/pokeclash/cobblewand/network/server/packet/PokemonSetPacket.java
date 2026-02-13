@@ -2,12 +2,10 @@ package com.github.pokeclash.cobblewand.network.server.packet;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.github.pokeclash.cobblewand.CobbleWand;
-import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public record PokemonSetPacket(Pokemon pokemon) implements CustomPacketPayload {

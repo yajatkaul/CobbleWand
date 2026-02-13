@@ -1,27 +1,19 @@
 package com.github.pokeclash.cobblewand.ui.screen;
 
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
-import com.cobblemon.mod.common.api.pokemon.feature.SpeciesFeatureAssignments;
-import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.RenderablePokemon;
 import com.cobblemon.mod.common.pokemon.Species;
-import com.github.pokeclash.cobblewand.CobbleWand;
-import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
-import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,9 +40,9 @@ public class CobbleWandScreen extends Screen {
 
     private ModelWidget modelWidget;
 
-    private int BASE_WIDTH = 349;
-    private int BASE_HEIGHT = 205;
-    private int PORTRAIT_SIZE = 66;
+    private final int BASE_WIDTH = 349;
+    private final int BASE_HEIGHT = 205;
+    private final int PORTRAIT_SIZE = 66;
 
     public CobbleWandScreen(String name) {
         super(Component.translatable(name));
@@ -214,7 +206,7 @@ public class CobbleWandScreen extends Screen {
 
         filteredSuggestions = PokemonSpecies.getSpecies()
                 .stream()
-                .map(s -> s.resourceIdentifier.getPath()) // convert Species → String
+                .map(s -> s.resourceIdentifier.getPath())
                 .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(input))
                 .toList();
 
@@ -270,28 +262,28 @@ public class CobbleWandScreen extends Screen {
     }
 
     private void setEV(Pokemon pokemon) {
-        if (hpIV.getIntValue() != -1) {
-            pokemon.setEV(Stats.HP, hpIV.getIntValue());
+        if (hpEV.getIntValue() != -1) {
+            pokemon.setEV(Stats.HP, hpEV.getIntValue());
         }
 
-        if (attackIV.getIntValue() != -1) {
-            pokemon.setEV(Stats.ATTACK, attackIV.getIntValue());
+        if (attackEV.getIntValue() != -1) {
+            pokemon.setEV(Stats.ATTACK, attackEV.getIntValue());
         }
 
-        if (defenseIV.getIntValue() != -1) {
-            pokemon.setEV(Stats.DEFENCE, defenseIV.getIntValue());
+        if (defenseEV.getIntValue() != -1) {
+            pokemon.setEV(Stats.DEFENCE, defenseEV.getIntValue());
         }
 
-        if (spAtkIV.getIntValue() != -1) {
-            pokemon.setEV(Stats.SPECIAL_ATTACK, spAtkIV.getIntValue());
+        if (spAtkEV.getIntValue() != -1) {
+            pokemon.setEV(Stats.SPECIAL_ATTACK, spAtkEV.getIntValue());
         }
 
-        if (spDefIV.getIntValue() != -1) {
-            pokemon.setEV(Stats.SPECIAL_DEFENCE, spDefIV.getIntValue());
+        if (spDefEV.getIntValue() != -1) {
+            pokemon.setEV(Stats.SPECIAL_DEFENCE, spDefEV.getIntValue());
         }
 
-        if (speedIV.getIntValue() != -1) {
-            pokemon.setEV(Stats.SPEED, speedIV.getIntValue());
+        if (speedEV.getIntValue() != -1) {
+            pokemon.setEV(Stats.SPEED, speedEV.getIntValue());
         }
     }
 

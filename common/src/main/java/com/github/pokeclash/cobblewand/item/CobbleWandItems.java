@@ -14,7 +14,7 @@ public class CobbleWandItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(CobbleWand.MOD_ID, Registries.ITEM);
 
     public static final RegistrySupplier<Item> COBBLEWAND = registerItem(
-            "cobblewand" ,
+            "cobblewand",
             () -> new CobbleWandItem(
                     new Item.Properties()
                             .stacksTo(1)
