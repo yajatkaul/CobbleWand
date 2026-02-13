@@ -41,7 +41,7 @@ public class CobbleWandItem extends Item {
         }
 
         if (level.isClientSide) {
-            Minecraft.getInstance().setScreen(new CobbleWandScreen("cobble_wand_screen"));
+            Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand"));
         }
 
         return super.use(level, player, hand);

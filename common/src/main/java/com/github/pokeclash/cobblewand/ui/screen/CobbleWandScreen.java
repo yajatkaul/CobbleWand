@@ -3,9 +3,11 @@ package com.github.pokeclash.cobblewand.ui.screen;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
+import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
+import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.RenderablePokemon;
 import com.cobblemon.mod.common.pokemon.Species;
@@ -15,6 +17,7 @@ import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 public class CobbleWandScreen extends Screen {
     private SuggestionEditBox nameField;
     private EditBox aspectField;
+    private SuggestionEditBox natureField;
 
     private SuggestionEditBox move1;
     private SuggestionEditBox move2;
@@ -46,6 +50,7 @@ public class CobbleWandScreen extends Screen {
     private NumericEditBox hpIV;
 
     private NumericEditBox level;
+    private NumericEditBox scale;
 
     private ModelWidget modelWidget;
 
@@ -59,153 +64,72 @@ public class CobbleWandScreen extends Screen {
         super(Component.translatable(name));
     }
 
-    private NumericEditBox createEVBox(int x, int y, String name) {
-        NumericEditBox temp = new NumericEditBox(
-                this.font,
-                x,
-                y,
-                40,
-                20,
-                Component.literal(name),
-                0, 252
-        );
-        temp.setHint(Component.literal(name));
-        return temp;
-    }
-
-    private NumericEditBox createIVBox(int x, int y, String name) {
-        NumericEditBox temp = new NumericEditBox(
-                this.font,
-                x,
-                y,
-                40,
-                20,
-                Component.literal(name),
-                0, 31
-        );
-        temp.setHint(Component.literal(name));
-        return temp;
-    }
-
-    private SuggestionEditBox makeMoveBox(int x, int y, String name) {
-        SuggestionEditBox temp = new SuggestionEditBox(
-                this.font,
-                x,
-                y,
-                100,
-                20,
-                Component.literal(name),
-                Moves.all()
-                        .stream()
-                        .map(m -> m.getName().toLowerCase(Locale.ROOT))
-                        .toList()
-        );
-        temp.setHint(Component.literal(name));
-        return temp;
-    }
-
     @Override
     protected void init() {
+        startPokemon.setSpecies(PokemonSpecies.random());
+
         int guiX = (this.width - BASE_WIDTH) / 2;
         int guiY = (this.height - BASE_HEIGHT) / 2;
 
-        nameField = new SuggestionEditBox(
-                this.font,
-                this.width / 2 - 100,
-                this.height / 2 - 40,
-                200,
-                20,
-                Component.literal("Pokemon"),
+        nameField = makeSuggestionEditBox(
+                guiX + 73,
+                guiY + 50,
+                "Pokemon",
                 PokemonSpecies.getSpecies()
                         .stream()
                         .map(s -> s.resourceIdentifier.getPath())
                         .toList()
         );
-        nameField.setHint(Component.literal("Pokemon Species"));
-        this.addRenderableWidget(nameField);
 
-        aspectField = new EditBox(
-                this.font,
-                this.width / 2 - 100,
-                this.height / 2 - 15,
-                100,
-                20,
-                Component.literal("Aspects")
+        aspectField = makeSuggestionEditBox(
+                guiX + 73,
+                guiY + 75,
+                "Aspects",
+                List.of()
         );
-        aspectField.setHint(Component.literal("Aspects"));
-        this.addRenderableWidget(aspectField);
 
-        move1 = new SuggestionEditBox(
-                this.font,
-                this.width / 2 - 100,
-                this.height / 2 + 10,
-                100,
-                20,
-                Component.literal("Aspects"),
-                Moves.all()
-                        .stream()
-                        .map(m -> m.getName().toLowerCase(Locale.ROOT))
-                        .toList()
-        );
         move1 = makeMoveBox(guiX + 73, guiY + 115, "Move 1");
-        this.addRenderableWidget(move1);
         move2 = makeMoveBox(guiX + 175, guiY + 115, "Move 2");
-        this.addRenderableWidget(move2);
         move3 = makeMoveBox(guiX + 73, guiY + 140, "Move 3");
-        this.addRenderableWidget(move3);
         move4 = makeMoveBox(guiX + 175, guiY + 140, "Move 4");
-        this.addRenderableWidget(move4);
-
-        level = new NumericEditBox(
-                this.font,
-                this.width / 2 - 100,
-                this.height / 2 + 60,
-                40,
-                20,
-                Component.literal("Level"),
-                1, Cobblemon.config.getMaxPokemonLevel()
-        );
-        level.setHint(Component.literal("Level"));
-        this.addRenderableWidget(level);
 
         // Left column
-        hpEV = this.createEVBox(guiX + 300, guiY + 40, "HP");
-        this.addRenderableWidget(hpEV);
-        attackEV = this.createEVBox(guiX + 300, guiY + 60, "Atk EV");
-        this.addRenderableWidget(attackEV);
-        defenseEV = this.createEVBox(guiX + 300, guiY + 80, "Def EV");
-        this.addRenderableWidget(defenseEV);
+        hpEV = this.createEVBox(guiX + 290, guiY + 40, "HP EV");
+        attackEV = this.createEVBox(guiX + 290, guiY + 60, "Atk EV");
+        defenseEV = this.createEVBox(guiX + 290, guiY + 80, "Def EV");
         // Right column
-        spAtkEV = this.createEVBox(guiX + 345, guiY + 40, "SpAtk EV");
-        this.addRenderableWidget(spAtkEV);
-        spDefEV = this.createEVBox(guiX + 345, guiY + 60, "SpDef EV");
-        this.addRenderableWidget(spDefEV);
-        speedEV = this.createEVBox(guiX + 345, guiY + 80, "Spd EV");
-        this.addRenderableWidget(speedEV);
+        spAtkEV = this.createEVBox(guiX + 335, guiY + 40, "SpAtk EV");
+        spDefEV = this.createEVBox(guiX + 335, guiY + 60, "SpDef EV");
+        speedEV = this.createEVBox(guiX + 335, guiY + 80, "Spd EV");
 
         // Left column IVs
-        hpIV = this.createIVBox(guiX + 300, guiY + 130, "HP IV");
-        this.addRenderableWidget(hpIV);
-        attackIV = this.createIVBox(guiX + 300, guiY + 150, "Atk IV");
-        this.addRenderableWidget(attackIV);
-        defenseIV = this.createIVBox(guiX + 300, guiY + 170, "Def IV");
-        this.addRenderableWidget(defenseIV);
+        hpIV = this.createIVBox(guiX + 290, guiY + 130, "HP IV");
+        attackIV = this.createIVBox(guiX + 290, guiY + 150, "Atk IV");
+        defenseIV = this.createIVBox(guiX + 290, guiY + 170, "Def IV");
         // Right column IVs
-        spAtkIV = this.createIVBox(guiX + 345, guiY + 130, "SpAtk IV");
-        this.addRenderableWidget(spAtkIV);
-        spDefIV = this.createIVBox(guiX + 345, guiY + 150, "SpDef IV");
-        this.addRenderableWidget(spDefIV);
-        speedIV = this.createIVBox(guiX + 345, guiY + 170, "Spd IV");
-        this.addRenderableWidget(speedIV);
+        spAtkIV = this.createIVBox(guiX + 335, guiY + 130, "SpAtk IV");
+        spDefIV = this.createIVBox(guiX + 335, guiY + 150, "SpDef IV");
+        speedIV = this.createIVBox(guiX + 335, guiY + 170, "Spd IV");
 
+        level = makeNumericBox(guiX + 73, guiY + 165, "Lvl", 1, Cobblemon.config.getMaxPokemonLevel(), 50);
+
+        scale = makeNumericBox(guiX + 130, guiY + 165, "Scale", 1, 100, 50);
+
+        natureField = makeSuggestionEditBox(
+                guiX + 185,
+                guiY + 165,
+                "Nature",
+                Natures.all().stream().map(n -> n.getName().getPath()).toList(),
+                60
+        );
 
         // Button
         this.addRenderableWidget(Button.builder(
                 Component.literal("Set"),
                 this::setPokemon
-        ).bounds(this.width / 2 - 100, this.height / 2 + 90, 200, 20).build());
+        ).bounds(guiX + 73, guiY + 190, 200, 20).build());
 
-        RenderablePokemon renderablePokemon = new Pokemon().asRenderablePokemon();
+        RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
         modelWidget = new ModelWidget(guiX + 6, guiY + 27, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 2f, 325f, -10.0);
     }
 
@@ -222,23 +146,22 @@ public class CobbleWandScreen extends Screen {
         move3.renderSuggestions(guiGraphics, this.font);
         move4.renderSuggestions(guiGraphics, this.font);
 
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
-    }
+        natureField.renderSuggestions(guiGraphics, this.font);
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
     }
 
     private void setPokemon(Button button) {
         int x = (this.width - BASE_WIDTH) / 2;
         int y = (this.height - BASE_HEIGHT) / 2;
 
-        Species pokemonSpecies = PokemonSpecies.getByName(nameField.getValue());
-
-        if (pokemonSpecies != null) {
-            startPokemon.setSpecies(pokemonSpecies);
+        if (!nameField.getValue().isBlank()) {
+            Species pokemonSpecies = PokemonSpecies.getByName(nameField.getValue());
+            if (pokemonSpecies != null) {
+                startPokemon.setSpecies(pokemonSpecies);
+            }
         }
+
         if (!aspectField.getValue().isBlank()) {
             Set<String> aspects = Arrays.stream(aspectField.getValue().split(","))
                     .map(String::trim)
@@ -255,10 +178,26 @@ public class CobbleWandScreen extends Screen {
             startPokemon.setLevel(level.getIntValue());
         }
 
+        if (scale.getIntValue() != -1) {
+            startPokemon.setScaleModifier(scale.getIntValue());
+        }
+
+        if (!natureField.getValue().isBlank()) {
+            Nature nature = Natures.getNature(nameField.getValue());
+            if (nature != null) {
+                startPokemon.setNature(nature);
+            }
+        }
+
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
 
         NetworkManager.sendToServer(new PokemonSetPacket(startPokemon));
         modelWidget = new ModelWidget(x + 6, y + 27, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 2f, 325f, -10.0);
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     private void setMoves(Pokemon pokemon) {
@@ -343,5 +282,98 @@ public class CobbleWandScreen extends Screen {
         if (speedIV.getIntValue() != -1) {
             pokemon.setIV(Stats.SPEED, speedIV.getIntValue());
         }
+    }
+
+    private NumericEditBox createEVBox(int x, int y, String name) {
+        NumericEditBox temp = new NumericEditBox(
+                this.font,
+                x,
+                y,
+                50,
+                20,
+                Component.literal(name),
+                0, 252
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private NumericEditBox createIVBox(int x, int y, String name) {
+        NumericEditBox temp = new NumericEditBox(
+                this.font,
+                x,
+                y,
+                50,
+                20,
+                Component.literal(name),
+                0, 31
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private SuggestionEditBox makeMoveBox(int x, int y, String name) {
+        SuggestionEditBox temp = new SuggestionEditBox(
+                this.font,
+                x,
+                y,
+                100,
+                20,
+                Component.literal(name),
+                Moves.all()
+                        .stream()
+                        .map(m -> m.getName().toLowerCase(Locale.ROOT))
+                        .toList()
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private NumericEditBox makeNumericBox(int x, int y, String name, int min, int max, int width) {
+        NumericEditBox temp = new NumericEditBox(
+                this.font,
+                x,
+                y,
+                width,
+                20,
+                Component.literal(name),
+                min, max
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private SuggestionEditBox makeSuggestionEditBox(int x, int y, String name, List<String> list) {
+        SuggestionEditBox temp = new SuggestionEditBox(
+                this.font,
+                x,
+                y,
+                100,
+                20,
+                Component.literal(name),
+                list
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private SuggestionEditBox makeSuggestionEditBox(int x, int y, String name, List<String> list, int width) {
+        SuggestionEditBox temp = new SuggestionEditBox(
+                this.font,
+                x,
+                y,
+                width,
+                20,
+                Component.literal(name),
+                list
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
     }
 }

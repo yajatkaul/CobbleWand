@@ -47,20 +47,21 @@ public class SuggestionEditBox extends EditBox {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.isFocused()) {
+            int y = this.getY() + 22;
 
-        int y = this.getY() + 22;
+            for (String suggestion : filtered) {
+                if (mouseX >= this.getX() &&
+                        mouseX <= this.getX() + this.getWidth() &&
+                        mouseY >= y &&
+                        mouseY <= y + 12) {
 
-        for (String suggestion : filtered) {
-            if (mouseX >= this.getX() &&
-                    mouseX <= this.getX() + this.getWidth() &&
-                    mouseY >= y &&
-                    mouseY <= y + 12) {
-
-                this.setValue(suggestion);
-                filtered = List.of();
-                return true;
+                    this.setValue(suggestion);
+                    filtered = List.of();
+                    return true;
+                }
+                y += 12;
             }
-            y += 12;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
