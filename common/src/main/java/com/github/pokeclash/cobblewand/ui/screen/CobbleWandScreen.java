@@ -1,5 +1,8 @@
 package com.github.pokeclash.cobblewand.ui.screen;
 
+import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.moves.MoveTemplate;
+import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
@@ -8,6 +11,7 @@ import com.cobblemon.mod.common.pokemon.RenderablePokemon;
 import com.cobblemon.mod.common.pokemon.Species;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
+import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -19,8 +23,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CobbleWandScreen extends Screen {
-    private EditBox nameField;
+    private SuggestionEditBox nameField;
     private EditBox aspectField;
+
+    private SuggestionEditBox move1;
+    private SuggestionEditBox move2;
+    private SuggestionEditBox move3;
+    private SuggestionEditBox move4;
 
     private NumericEditBox speedEV;
     private NumericEditBox attackEV;
@@ -36,13 +45,15 @@ public class CobbleWandScreen extends Screen {
     private NumericEditBox spDefIV;
     private NumericEditBox hpIV;
 
-    private List<String> filteredSuggestions = new ArrayList<>();
+    private NumericEditBox level;
 
     private ModelWidget modelWidget;
 
     private final int BASE_WIDTH = 349;
     private final int BASE_HEIGHT = 205;
     private final int PORTRAIT_SIZE = 66;
+
+    private final Pokemon startPokemon = new Pokemon();
 
     public CobbleWandScreen(String name) {
         super(Component.translatable(name));
@@ -76,21 +87,43 @@ public class CobbleWandScreen extends Screen {
         return temp;
     }
 
+    private SuggestionEditBox makeMoveBox(int x, int y, String name) {
+        SuggestionEditBox temp = new SuggestionEditBox(
+                this.font,
+                x,
+                y,
+                100,
+                20,
+                Component.literal(name),
+                Moves.all()
+                        .stream()
+                        .map(m -> m.getName().toLowerCase(Locale.ROOT))
+                        .toList()
+        );
+        temp.setHint(Component.literal(name));
+        return temp;
+    }
+
     @Override
     protected void init() {
         int guiX = (this.width - BASE_WIDTH) / 2;
         int guiY = (this.height - BASE_HEIGHT) / 2;
 
-        nameField = new EditBox(
+        nameField = new SuggestionEditBox(
                 this.font,
                 this.width / 2 - 100,
                 this.height / 2 - 40,
-                100,
+                200,
                 20,
-                Component.literal("Enter name")
+                Component.literal("Pokemon"),
+                PokemonSpecies.getSpecies()
+                        .stream()
+                        .map(s -> s.resourceIdentifier.getPath())
+                        .toList()
         );
         nameField.setHint(Component.literal("Pokemon Species"));
         this.addRenderableWidget(nameField);
+
         aspectField = new EditBox(
                 this.font,
                 this.width / 2 - 100,
@@ -101,6 +134,39 @@ public class CobbleWandScreen extends Screen {
         );
         aspectField.setHint(Component.literal("Aspects"));
         this.addRenderableWidget(aspectField);
+
+        move1 = new SuggestionEditBox(
+                this.font,
+                this.width / 2 - 100,
+                this.height / 2 + 10,
+                100,
+                20,
+                Component.literal("Aspects"),
+                Moves.all()
+                        .stream()
+                        .map(m -> m.getName().toLowerCase(Locale.ROOT))
+                        .toList()
+        );
+        move1 = makeMoveBox(guiX + 73, guiY + 115, "Move 1");
+        this.addRenderableWidget(move1);
+        move2 = makeMoveBox(guiX + 175, guiY + 115, "Move 2");
+        this.addRenderableWidget(move2);
+        move3 = makeMoveBox(guiX + 73, guiY + 140, "Move 3");
+        this.addRenderableWidget(move3);
+        move4 = makeMoveBox(guiX + 175, guiY + 140, "Move 4");
+        this.addRenderableWidget(move4);
+
+        level = new NumericEditBox(
+                this.font,
+                this.width / 2 - 100,
+                this.height / 2 + 60,
+                40,
+                20,
+                Component.literal("Level"),
+                1, Cobblemon.config.getMaxPokemonLevel()
+        );
+        level.setHint(Component.literal("Level"));
+        this.addRenderableWidget(level);
 
         // Left column
         hpEV = this.createEVBox(guiX + 300, guiY + 40, "HP");
@@ -137,14 +203,10 @@ public class CobbleWandScreen extends Screen {
         this.addRenderableWidget(Button.builder(
                 Component.literal("Set"),
                 this::setPokemon
-        ).bounds(this.width / 2 - 100, this.height / 2 + 40, 200, 20).build());
+        ).bounds(this.width / 2 - 100, this.height / 2 + 90, 200, 20).build());
 
         RenderablePokemon renderablePokemon = new Pokemon().asRenderablePokemon();
         modelWidget = new ModelWidget(guiX + 6, guiY + 27, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 2f, 325f, -10.0);
-    }
-
-    private void setPokemon(Button button) {
-        setPokemon(nameField.getValue());
     }
 
     @Override
@@ -153,33 +215,14 @@ public class CobbleWandScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         modelWidget.render(guiGraphics, mouseX, mouseY, partialTick);
 
+        nameField.renderSuggestions(guiGraphics, this.font);
+
+        move1.renderSuggestions(guiGraphics, this.font);
+        move2.renderSuggestions(guiGraphics, this.font);
+        move3.renderSuggestions(guiGraphics, this.font);
+        move4.renderSuggestions(guiGraphics, this.font);
+
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
-
-        if (nameField.isFocused()) {
-            int y = nameField.getY() + 22;
-
-            for (int i = 0; i < filteredSuggestions.size() && i < 5; i++) {
-                String suggestion = filteredSuggestions.get(i);
-
-                guiGraphics.fill(
-                        nameField.getX(),
-                        y,
-                        nameField.getX() + 200,
-                        y + 12,
-                        0xFF2C2C2C
-                );
-
-                guiGraphics.drawString(
-                        this.font,
-                        suggestion,
-                        nameField.getX() + 4,
-                        y + 2,
-                        0xFFFFFF
-                );
-
-                y += 12;
-            }
-        }
     }
 
     @Override
@@ -187,78 +230,67 @@ public class CobbleWandScreen extends Screen {
         return false;
     }
 
-    @Override
-    public boolean charTyped(char codePoint, int modifiers) {
-        boolean result = super.charTyped(codePoint, modifiers);
-        updateSuggestions();
-        return result;
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        boolean result = super.keyPressed(keyCode, scanCode, modifiers);
-        updateSuggestions();
-        return result;
-    }
-
-    private void updateSuggestions() {
-        String input = nameField.getValue().toLowerCase();
-
-        filteredSuggestions = PokemonSpecies.getSpecies()
-                .stream()
-                .map(s -> s.resourceIdentifier.getPath())
-                .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(input))
-                .toList();
-
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (nameField.isFocused()) {
-            int y = nameField.getY() + 22;
-
-            for (String suggestion : filteredSuggestions) {
-                if (mouseX >= nameField.getX() &&
-                        mouseX <= nameField.getX() + 200 &&
-                        mouseY >= y &&
-                        mouseY <= y + 12) {
-
-                    nameField.setValue(suggestion);
-                    filteredSuggestions = List.of();
-                    return true;
-                }
-                y += 12;
-            }
-        }
-
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    private void setPokemon(String species) {
+    private void setPokemon(Button button) {
         int x = (this.width - BASE_WIDTH) / 2;
         int y = (this.height - BASE_HEIGHT) / 2;
 
-        Species pokemonSpecies = PokemonSpecies.getByName(species);
-        Pokemon pokemon = new Pokemon();
+        Species pokemonSpecies = PokemonSpecies.getByName(nameField.getValue());
 
         if (pokemonSpecies != null) {
-            pokemon.setSpecies(pokemonSpecies);
+            startPokemon.setSpecies(pokemonSpecies);
         }
         if (!aspectField.getValue().isBlank()) {
             Set<String> aspects = Arrays.stream(aspectField.getValue().split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toSet());
-            pokemon.setForcedAspects(aspects);
+            startPokemon.setForcedAspects(aspects);
         }
 
-        setEV(pokemon);
-        setIV(pokemon);
+        setEV(startPokemon);
+        setIV(startPokemon);
+        setMoves(startPokemon);
 
-        RenderablePokemon renderablePokemon = pokemon.asRenderablePokemon();
+        if (level.getIntValue() != -1) {
+            startPokemon.setLevel(level.getIntValue());
+        }
 
-        NetworkManager.sendToServer(new PokemonSetPacket(pokemon));
+        RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
+
+        NetworkManager.sendToServer(new PokemonSetPacket(startPokemon));
         modelWidget = new ModelWidget(x + 6, y + 27, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 2f, 325f, -10.0);
+    }
+
+    private void setMoves(Pokemon pokemon) {
+        Set<String> movesAdded = new HashSet<>();
+        if (!move1.getValue().isBlank()) {
+            MoveTemplate move = Moves.getByName(move1.getValue());
+            if (move != null) {
+                pokemon.getMoveSet().setMove(0, move.create());
+                movesAdded.add(move.getName());
+            }
+        }
+        if (!move2.getValue().isBlank()) {
+            MoveTemplate move = Moves.getByName(move2.getValue());
+            if (move != null && !movesAdded.contains(move.getName())) {
+                pokemon.getMoveSet().setMove(1, move.create());
+                movesAdded.add(move.getName());
+            }
+        }
+        if (!move3.getValue().isBlank()) {
+            MoveTemplate move = Moves.getByName(move3.getValue());
+            if (move != null && !movesAdded.contains(move.getName())) {
+                pokemon.getMoveSet().setMove(2, move.create());
+                movesAdded.add(move.getName());
+            }
+        }
+        if (!move4.getValue().isBlank()) {
+            MoveTemplate move = Moves.getByName(move4.getValue());
+            if (move != null && !movesAdded.contains(move.getName())) {
+                pokemon.getMoveSet().setMove(3, move.create());
+                movesAdded.add(move.getName());
+            }
+        }
     }
 
     private void setEV(Pokemon pokemon) {
