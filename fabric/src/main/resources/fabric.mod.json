@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "cobblewand",
+  "version": "${version}",
+  "name": "CobbleWand",
+  "description": "",
+  "authors": [
+    "YajatKaul"
+  ],
+  "contact": {
+    "homepage": ""
+  },
+  "license": "unlicense",
+  "icon": "assets/cobblewand/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.github.pokeclash.cobblewand.fabric.CobbleWandFabric"
+    ],
+    "client": [
+      "com.github.pokeclash.cobblewand.fabric.client.CobbleWandFabricClient"
+    ]
+  },
+  "mixins": [
+    "cobblewand.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "architectury": ">=13.0.8",
+    "fabric-api": "*",
+    "cobblemon": ">=1.7.0"
+  }
+}
