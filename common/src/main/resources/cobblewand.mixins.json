@@ -6,6 +6,8 @@
   "client": [
   ],
   "mixins": [
+    "PokemonAccessor",
+    "TeraTypesAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

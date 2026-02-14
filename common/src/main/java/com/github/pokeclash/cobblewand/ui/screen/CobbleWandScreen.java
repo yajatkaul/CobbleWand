@@ -6,11 +6,15 @@ import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
+import com.cobblemon.mod.common.api.types.tera.TeraType;
+import com.cobblemon.mod.common.api.types.tera.TeraTypes;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
 import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.RenderablePokemon;
 import com.cobblemon.mod.common.pokemon.Species;
+import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
+import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
 import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
@@ -29,6 +33,7 @@ public class CobbleWandScreen extends Screen {
     private SuggestionEditBox nameField;
     private EditBox aspectField;
     private SuggestionEditBox natureField;
+    private SuggestionEditBox teraField;
 
     private SuggestionEditBox move1;
     private SuggestionEditBox move2;
@@ -51,8 +56,12 @@ public class CobbleWandScreen extends Screen {
 
     private NumericEditBox level;
     private NumericEditBox scale;
+    private NumericEditBox friendShip;
+    private NumericEditBox dmaxLevel;
 
     private ModelWidget modelWidget;
+
+    private Checkbox gmaxFactor;
 
     private final int BASE_WIDTH = 349;
     private final int BASE_HEIGHT = 205;
@@ -79,6 +88,23 @@ public class CobbleWandScreen extends Screen {
                         .stream()
                         .map(s -> s.resourceIdentifier.getPath())
                         .toList()
+        );
+
+        teraField = makeSuggestionEditBox(
+                guiX + 175,
+                guiY + 50,
+                "Tera",
+                TeraTypesAccessor.getTypes().values()
+                        .stream()
+                        .map(t -> t.showdownId().toLowerCase(Locale.ROOT))
+                        .toList(),
+                70
+        );
+
+        gmaxFactor = makeCheckBox(
+                guiX + 175,
+                guiY + 77,
+                "Gmax Factor"
         );
 
         aspectField = makeSuggestionEditBox(
@@ -111,12 +137,16 @@ public class CobbleWandScreen extends Screen {
         spDefIV = this.createIVBox(guiX + 335, guiY + 150, "SpDef IV");
         speedIV = this.createIVBox(guiX + 335, guiY + 170, "Spd IV");
 
-        level = makeNumericBox(guiX + 73, guiY + 165, "Lvl", 1, Cobblemon.config.getMaxPokemonLevel(), 50);
+        level = makeNumericBox(guiX - 20, guiY + 165, "Lvl", 1, Cobblemon.config.getMaxPokemonLevel(), 50);
 
-        scale = makeNumericBox(guiX + 130, guiY + 165, "Scale", 1, 100, 50);
+        scale = makeNumericBox(guiX + 32, guiY + 165, "Scale", 1, 100, 50);
+
+        friendShip = makeNumericBox(guiX + 84, guiY + 165, "Frnd", 1, 255, 50);
+
+        dmaxLevel = makeNumericBox(guiX + 136, guiY + 165, "DLvl", 0, Cobblemon.config.getMaxDynamaxLevel(), 50);
 
         natureField = makeSuggestionEditBox(
-                guiX + 185,
+                guiX + 188,
                 guiY + 165,
                 "Nature",
                 Natures.all().stream().map(n -> n.getName().getPath()).toList(),
@@ -147,6 +177,8 @@ public class CobbleWandScreen extends Screen {
         move4.renderSuggestions(guiGraphics, this.font);
 
         natureField.renderSuggestions(guiGraphics, this.font);
+
+        teraField.renderSuggestions(guiGraphics, this.font);
 
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
     }
@@ -182,11 +214,30 @@ public class CobbleWandScreen extends Screen {
             startPokemon.setScaleModifier(scale.getIntValue());
         }
 
+        if (friendShip.getIntValue() != -1) {
+            ((PokemonAccessor) startPokemon).setFriendship(friendShip.getIntValue());
+        }
+
         if (!natureField.getValue().isBlank()) {
             Nature nature = Natures.getNature(nameField.getValue());
             if (nature != null) {
                 startPokemon.setNature(nature);
             }
+        }
+
+        if (dmaxLevel.getIntValue() != -1) {
+            startPokemon.setDmaxLevel(dmaxLevel.getIntValue());
+        }
+
+        if (!teraField.getValue().isBlank()) {
+            TeraType type = TeraTypes.get(teraField.getValue());
+            if (type != null) {
+                startPokemon.setTeraType(type);
+            }
+        }
+
+        if (gmaxFactor.selected()) {
+            startPokemon.setGmaxFactor(true);
         }
 
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
@@ -373,6 +424,14 @@ public class CobbleWandScreen extends Screen {
                 list
         );
         temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private Checkbox makeCheckBox(int x, int y, String name) {
+        Checkbox temp = Checkbox.builder(Component.literal(name), this.font)
+                .pos(x, y)
+                .build();
         this.addRenderableWidget(temp);
         return temp;
     }
