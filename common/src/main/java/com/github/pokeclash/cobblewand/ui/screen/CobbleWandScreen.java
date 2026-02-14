@@ -13,6 +13,7 @@ import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.RenderablePokemon;
 import com.cobblemon.mod.common.pokemon.Species;
+import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
@@ -30,7 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CobbleWandScreen extends Screen {
-    private SuggestionEditBox nameField;
+    private SuggestionEditBox speciesField;
     private EditBox aspectField;
     private SuggestionEditBox natureField;
     private SuggestionEditBox teraField;
@@ -63,14 +64,19 @@ public class CobbleWandScreen extends Screen {
 
     private Checkbox gmaxFactor;
 
+    private Checkbox statue;
+
     private final int BASE_WIDTH = 349;
     private final int BASE_HEIGHT = 205;
     private final int PORTRAIT_SIZE = 66;
 
     private final Pokemon startPokemon = new Pokemon();
 
-    public CobbleWandScreen(String name) {
+    private final WandData wandData;
+
+    public CobbleWandScreen(String name, WandData wandData) {
         super(Component.translatable(name));
+        this.wandData = wandData;
     }
 
     @Override
@@ -80,7 +86,7 @@ public class CobbleWandScreen extends Screen {
         int guiX = (this.width - BASE_WIDTH) / 2;
         int guiY = (this.height - BASE_HEIGHT) / 2;
 
-        nameField = makeSuggestionEditBox(
+        speciesField = makeSuggestionEditBox(
                 guiX + 73,
                 guiY + 50,
                 "Pokemon",
@@ -105,6 +111,12 @@ public class CobbleWandScreen extends Screen {
                 guiX + 175,
                 guiY + 77,
                 "Gmax Factor"
+        );
+
+        statue = makeCheckBox(
+                guiX + 175,
+                guiY + 96,
+                "Statue"
         );
 
         aspectField = makeSuggestionEditBox(
@@ -159,8 +171,17 @@ public class CobbleWandScreen extends Screen {
                 this::setPokemon
         ).bounds(guiX + 73, guiY + 190, 200, 20).build());
 
+        this.addRenderableWidget(Button.builder(
+                Component.literal("Reset"),
+                this::resetPokemon
+        ).bounds(guiX - 10, guiY + 190, 80, 20).build());
+
+        applyWandDataToFields(wandData);
+
+        setPokemonBasic();
+        
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
-        modelWidget = new ModelWidget(guiX + 6, guiY + 27, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 2f, 325f, -10.0);
+        modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
     }
 
     @Override
@@ -169,7 +190,7 @@ public class CobbleWandScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         modelWidget.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        nameField.renderSuggestions(guiGraphics, this.font);
+        speciesField.renderSuggestions(guiGraphics, this.font);
 
         move1.renderSuggestions(guiGraphics, this.font);
         move2.renderSuggestions(guiGraphics, this.font);
@@ -184,24 +205,10 @@ public class CobbleWandScreen extends Screen {
     }
 
     private void setPokemon(Button button) {
-        int x = (this.width - BASE_WIDTH) / 2;
-        int y = (this.height - BASE_HEIGHT) / 2;
+        int guiX = (this.width - BASE_WIDTH) / 2;
+        int guiY = (this.height - BASE_HEIGHT) / 2;
 
-        if (!nameField.getValue().isBlank()) {
-            Species pokemonSpecies = PokemonSpecies.getByName(nameField.getValue());
-            if (pokemonSpecies != null) {
-                startPokemon.setSpecies(pokemonSpecies);
-            }
-        }
-
-        if (!aspectField.getValue().isBlank()) {
-            Set<String> aspects = Arrays.stream(aspectField.getValue().split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toSet());
-            startPokemon.setForcedAspects(aspects);
-        }
-
+        setPokemonBasic();
         setEV(startPokemon);
         setIV(startPokemon);
         setMoves(startPokemon);
@@ -218,8 +225,8 @@ public class CobbleWandScreen extends Screen {
             ((PokemonAccessor) startPokemon).setFriendship(friendShip.getIntValue());
         }
 
-        if (!natureField.getValue().isBlank()) {
-            Nature nature = Natures.getNature(nameField.getValue());
+        if (!natureField.getValue().isEmpty()) {
+            Nature nature = Natures.getNature(speciesField.getValue());
             if (nature != null) {
                 startPokemon.setNature(nature);
             }
@@ -242,8 +249,46 @@ public class CobbleWandScreen extends Screen {
 
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
 
-        NetworkManager.sendToServer(new PokemonSetPacket(startPokemon));
-        modelWidget = new ModelWidget(x + 6, y + 27, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 2f, 325f, -10.0);
+        WandData newWandData = createWandData();
+        NetworkManager.sendToServer(new PokemonSetPacket(startPokemon, newWandData));
+        modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
+    }
+
+    private void resetPokemon(Button button) {
+        if (speciesField != null) speciesField.setValue("");
+        if (aspectField != null) aspectField.setValue("");
+        if (natureField != null) natureField.setValue("");
+        if (teraField != null) teraField.setValue("");
+
+        if (move1 != null) move1.setValue("");
+        if (move2 != null) move2.setValue("");
+        if (move3 != null) move3.setValue("");
+        if (move4 != null) move4.setValue("");
+
+        if (speedEV != null) speedEV.setValue("");
+        if (attackEV != null) attackEV.setValue("");
+        if (defenseEV != null) defenseEV.setValue("");
+        if (spAtkEV != null) spAtkEV.setValue("");
+        if (spDefEV != null) spDefEV.setValue("");
+        if (hpEV != null) hpEV.setValue("");
+
+        if (speedIV != null) speedIV.setValue("");
+        if (attackIV != null) attackIV.setValue("");
+        if (defenseIV != null) defenseIV.setValue("");
+        if (spAtkIV != null) spAtkIV.setValue("");
+        if (spDefIV != null) spDefIV.setValue("");
+        if (hpIV != null) hpIV.setValue("");
+
+        if (level != null) level.setValue("");
+        if (scale != null) scale.setValue("");
+        if (friendShip != null) friendShip.setValue("");
+        if (dmaxLevel != null) dmaxLevel.setValue("");
+
+        if (gmaxFactor != null) gmaxFactor.selected = false;
+        if (statue != null) statue.selected = false;
+
+        startPokemon.setSpecies(PokemonSpecies.random());
+        setPokemon(null);
     }
 
     @Override
@@ -251,30 +296,159 @@ public class CobbleWandScreen extends Screen {
         return false;
     }
 
+    private WandData createWandData() {
+        return new WandData(
+                Optional.of(new WandData.BasicData(
+                        optionalString(speciesField),
+                        optionalString(teraField),
+                        optionalString(aspectField),
+                        optionalString(natureField)
+                )),
+                Optional.of(new WandData.Flags(
+                        optionalBool(gmaxFactor),
+                        optionalBool(statue)
+                )),
+                Optional.of(new WandData.MoveSet(
+                        optionalString(move1),
+                        optionalString(move2),
+                        optionalString(move3),
+                        optionalString(move4)
+                )),
+                Optional.of(new WandData.LevelData(
+                        optionalInt(level).map(String::valueOf),
+                        optionalInt(scale).map(String::valueOf),
+                        optionalInt(friendShip).map(String::valueOf),
+                        optionalInt(dmaxLevel).map(String::valueOf)
+                )),
+                Optional.of(new WandData.EVs(
+                        optionalInt(hpEV),
+                        optionalInt(attackEV),
+                        optionalInt(defenseEV),
+                        optionalInt(spAtkEV),
+                        optionalInt(spDefEV),
+                        optionalInt(speedEV)
+                )),
+                Optional.of(new WandData.IVs(
+                        optionalInt(hpIV),
+                        optionalInt(attackIV),
+                        optionalInt(defenseIV),
+                        optionalInt(spAtkIV),
+                        optionalInt(spDefIV),
+                        optionalInt(speedIV)
+                ))
+        );
+    }
+
+    private void applyWandDataToFields(WandData data) {
+        data.basic().ifPresent(basic -> {
+            basic.species().ifPresent(speciesField::setValue);
+            basic.tera().ifPresent(teraField::setValue);
+            basic.aspects().ifPresent(aspectField::setValue);
+            basic.nature().ifPresent(natureField::setValue);
+        });
+
+        data.flags().ifPresent(flags -> {
+            flags.gmaxFactor().ifPresent((val) -> {
+                gmaxFactor.selected = val;
+            });
+            flags.statue().ifPresent((val) -> {
+                statue.selected = val;
+            });
+        });
+
+        data.moves().ifPresent(moves -> {
+            moves.move1().ifPresent(move1::setValue);
+            moves.move2().ifPresent(move2::setValue);
+            moves.move3().ifPresent(move3::setValue);
+            moves.move4().ifPresent(move4::setValue);
+        });
+
+        data.levelData().ifPresent(levelData -> {
+            levelData.lvl().ifPresent(v -> level.setValue(v));
+            levelData.scale().ifPresent(v -> scale.setValue(v));
+            levelData.frnd().ifPresent(v -> friendShip.setValue(v));
+            levelData.dlvl().ifPresent(v -> dmaxLevel.setValue(v));
+        });
+
+        data.evs().ifPresent(evs -> {
+            evs.hp().ifPresent(v -> hpEV.setValue(String.valueOf(v)));
+            evs.attack().ifPresent(v -> attackEV.setValue(String.valueOf(v)));
+            evs.defense().ifPresent(v -> defenseEV.setValue(String.valueOf(v)));
+            evs.specialAttack().ifPresent(v -> spAtkEV.setValue(String.valueOf(v)));
+            evs.specialDefense().ifPresent(v -> spDefEV.setValue(String.valueOf(v)));
+            evs.speed().ifPresent(v -> speedEV.setValue(String.valueOf(v)));
+        });
+
+        data.ivs().ifPresent(ivs -> {
+            ivs.hp().ifPresent(v -> hpIV.setValue(String.valueOf(v)));
+            ivs.attack().ifPresent(v -> attackIV.setValue(String.valueOf(v)));
+            ivs.defense().ifPresent(v -> defenseIV.setValue(String.valueOf(v)));
+            ivs.specialAttack().ifPresent(v -> spAtkIV.setValue(String.valueOf(v)));
+            ivs.specialDefense().ifPresent(v -> spDefIV.setValue(String.valueOf(v)));
+            ivs.speed().ifPresent(v -> speedIV.setValue(String.valueOf(v)));
+        });
+    }
+
+    private Optional<String> optionalString(EditBox box) {
+        if (box == null) return Optional.empty();
+        String value = box.getValue();
+        return value.isEmpty()
+                ? Optional.empty()
+                : Optional.of(value.trim());
+    }
+
+    private Optional<Integer> optionalInt(NumericEditBox box) {
+        if (box == null) return Optional.empty();
+        int value = box.getIntValue();
+        return value == -1 ? Optional.empty() : Optional.of(value);
+    }
+
+    private Optional<Boolean> optionalBool(Checkbox checkbox) {
+        if (checkbox == null) return Optional.empty();
+        return Optional.of(checkbox.selected());
+    }
+
+    private void setPokemonBasic() {
+        if (!speciesField.getValue().isEmpty()) {
+            Species pokemonSpecies = PokemonSpecies.getByName(speciesField.getValue());
+            if (pokemonSpecies != null) {
+                startPokemon.setSpecies(pokemonSpecies);
+            }
+        }
+
+        if (!aspectField.getValue().isEmpty()) {
+            Set<String> aspects = Arrays.stream(aspectField.getValue().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
+            startPokemon.setForcedAspects(aspects);
+        }
+    }
+
     private void setMoves(Pokemon pokemon) {
         Set<String> movesAdded = new HashSet<>();
-        if (!move1.getValue().isBlank()) {
+        if (!move1.getValue().isEmpty()) {
             MoveTemplate move = Moves.getByName(move1.getValue());
             if (move != null) {
                 pokemon.getMoveSet().setMove(0, move.create());
                 movesAdded.add(move.getName());
             }
         }
-        if (!move2.getValue().isBlank()) {
+        if (!move2.getValue().isEmpty()) {
             MoveTemplate move = Moves.getByName(move2.getValue());
             if (move != null && !movesAdded.contains(move.getName())) {
                 pokemon.getMoveSet().setMove(1, move.create());
                 movesAdded.add(move.getName());
             }
         }
-        if (!move3.getValue().isBlank()) {
+        if (!move3.getValue().isEmpty()) {
             MoveTemplate move = Moves.getByName(move3.getValue());
             if (move != null && !movesAdded.contains(move.getName())) {
                 pokemon.getMoveSet().setMove(2, move.create());
                 movesAdded.add(move.getName());
             }
         }
-        if (!move4.getValue().isBlank()) {
+        if (!move4.getValue().isEmpty()) {
             MoveTemplate move = Moves.getByName(move4.getValue());
             if (move != null && !movesAdded.contains(move.getName())) {
                 pokemon.getMoveSet().setMove(3, move.create());

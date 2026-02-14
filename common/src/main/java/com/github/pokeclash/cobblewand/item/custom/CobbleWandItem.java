@@ -1,7 +1,9 @@
 package com.github.pokeclash.cobblewand.item.custom;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.github.pokeclash.cobblewand.CobbleWand;
+import com.cobblemon.mod.common.pokemon.properties.AspectPropertyType;
+import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
+import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
 import com.github.pokeclash.cobblewand.ui.screen.CobbleWandScreen;
@@ -28,20 +30,15 @@ public class CobbleWandItem extends Item {
 
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getUseItem();
+        ItemStack stack = player.getItemInHand(hand);
         if (hand != InteractionHand.MAIN_HAND) {
             return InteractionResultHolder.pass(stack);
         }
 
-        PokemonStorage storge = stack.getOrDefault(CobbleWandComponents.POKEMON_STORAGE.get(), PokemonStorage.defaultStorage());
-
-        if (storge.getPokemon(player.registryAccess()) != null) {
-            CobbleWand.LOGGER.info(storge.getPokemon(player.registryAccess()).showdownId());
-            return InteractionResultHolder.success(stack);
-        }
+        PokemonStorage storage = stack.getOrDefault(CobbleWandComponents.POKEMON_STORAGE.get(), PokemonStorage.defaultStorage());
 
         if (level.isClientSide) {
-            Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand"));
+            Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand", storage.wandData()));
         }
 
         return super.use(level, player, hand);
@@ -55,25 +52,31 @@ public class CobbleWandItem extends Item {
         Pokemon pokemon = storge.getPokemon(level.registryAccess());
         Player player = useOnContext.getPlayer();
 
-        if (pokemon != null && !player.isCrouching()) {
+        if (player != null && pokemon != null && !player.isCrouching()) {
             if (level instanceof ServerLevel serverLevel) {
                 BlockPos pos = useOnContext.getClickedPos();
                 pokemon.sendOut(serverLevel, new Vec3(pos.getX(), pos.getY(), pos.getZ()), null, (pokemonEntity -> {
-                    pokemonEntity.setNoAi(true);
+                    storge.wandData().flags().flatMap(WandData.Flags::statue).ifPresent((statue) -> {
+                        if (statue) {
+                            pokemonEntity.setNoAi(true);
+                            pokemonEntity.setPersistenceRequired();
+                            UncatchableProperty.INSTANCE.uncatchable().apply(pokemon);
+                            pokemonEntity.noPhysics = true;
+                            AspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemon);
+                        }
+                    });
 
                     float oppositeYaw = player.getYRot() + 180.0F;
                     pokemonEntity.setYRot(oppositeYaw);
                     pokemonEntity.setYHeadRot(oppositeYaw);
                     pokemonEntity.setYBodyRot(oppositeYaw);
 
-                    pokemonEntity.setPersistenceRequired();
-
                     return Unit.INSTANCE;
                 }));
             }
         } else {
             if (level.isClientSide) {
-                Minecraft.getInstance().setScreen(new CobbleWandScreen("cobble_wand_screen"));
+                Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand", storge.wandData()));
             }
         }
         return InteractionResult.SUCCESS;

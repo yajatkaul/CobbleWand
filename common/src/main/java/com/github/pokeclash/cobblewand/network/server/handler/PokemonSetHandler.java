@@ -13,7 +13,7 @@ public class PokemonSetHandler {
         ItemStack itemStack = packetContext.getPlayer().getMainHandItem();
         itemStack.set(
                 CobbleWandComponents.POKEMON_STORAGE.get(),
-                new PokemonStorage(new CompoundTag())
+                new PokemonStorage(new CompoundTag(), pokemonSetPacket.wandData())
                         .save(
                                 CobbleWand.minecraftServer.registryAccess(),
                                 pokemonSetPacket.pokemon()
