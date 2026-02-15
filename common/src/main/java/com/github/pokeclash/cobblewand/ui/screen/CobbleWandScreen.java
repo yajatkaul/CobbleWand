@@ -21,6 +21,7 @@ import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
+import com.github.pokeclash.cobblewand.ui.util.FloatEditBox;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
 import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
 import dev.architectury.networking.NetworkManager;
@@ -63,7 +64,7 @@ public class CobbleWandScreen extends Screen {
     private NumericEditBox spDefIV;
     private NumericEditBox hpIV;
     private NumericEditBox level;
-    private NumericEditBox scale;
+    private FloatEditBox scale;
     private NumericEditBox friendShip;
     private NumericEditBox dmaxLevel;
     private ModelWidget modelWidget;
@@ -157,7 +158,7 @@ public class CobbleWandScreen extends Screen {
 
         level = makeNumericBox(guiX - 20, guiY + 165, "Lvl", 1, Cobblemon.config.getMaxPokemonLevel(), 50);
 
-        scale = makeNumericBox(guiX + 32, guiY + 165, "Scale", 1, 100, 50);
+        scale = makeFloatBox(guiX + 32, guiY + 165, "Scale", 0, 100, 50);
 
         friendShip = makeNumericBox(guiX + 84, guiY + 165, "Frnd", 1, 255, 50);
 
@@ -225,8 +226,8 @@ public class CobbleWandScreen extends Screen {
             startPokemon.setLevel(level.getIntValue());
         }
 
-        if (scale.getIntValue() != -1) {
-            startPokemon.setScaleModifier(scale.getIntValue());
+        if (scale.getFloatValue() != -1) {
+            startPokemon.setScaleModifier(scale.getFloatValue());
         }
 
         if (friendShip.getIntValue() != -1) {
@@ -334,7 +335,7 @@ public class CobbleWandScreen extends Screen {
                 )),
                 Optional.of(new WandData.LevelData(
                         optionalInt(level).map(String::valueOf),
-                        optionalInt(scale).map(String::valueOf),
+                        optionalFloat(scale).map(String::valueOf),
                         optionalInt(friendShip).map(String::valueOf),
                         optionalInt(dmaxLevel).map(String::valueOf)
                 )),
@@ -420,6 +421,12 @@ public class CobbleWandScreen extends Screen {
         if (box == null) return Optional.empty();
         int value = box.getIntValue();
         return value == -1 ? Optional.empty() : Optional.of(value);
+    }
+
+    private Optional<Float> optionalFloat(FloatEditBox box) {
+        if (box == null) return Optional.empty();
+        float value = box.getFloatValue();
+        return value == -1f ? Optional.empty() : Optional.of(value);
     }
 
     private Optional<Boolean> optionalBool(Checkbox checkbox) {
@@ -578,6 +585,21 @@ public class CobbleWandScreen extends Screen {
 
     private NumericEditBox makeNumericBox(int x, int y, String name, int min, int max, int width) {
         NumericEditBox temp = new NumericEditBox(
+                this.font,
+                x,
+                y,
+                width,
+                20,
+                Component.literal(name),
+                min, max
+        );
+        temp.setHint(Component.literal(name));
+        this.addRenderableWidget(temp);
+        return temp;
+    }
+
+    private FloatEditBox makeFloatBox(int x, int y, String name, float min, float max, int width) {
+        FloatEditBox temp = new FloatEditBox(
                 this.font,
                 x,
                 y,

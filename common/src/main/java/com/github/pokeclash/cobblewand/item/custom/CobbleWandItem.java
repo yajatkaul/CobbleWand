@@ -1,5 +1,6 @@
 package com.github.pokeclash.cobblewand.item.custom;
 
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.AspectPropertyType;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
@@ -62,6 +63,7 @@ public class CobbleWandItem extends Item {
                             UncatchableProperty.INSTANCE.uncatchable().apply(pokemon);
                             pokemonEntity.noPhysics = true;
                             AspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemon);
+                            pokemonEntity.getEntityData().set(PokemonEntity.Companion.getHIDE_LABEL(), true);
                         }
                     });
 
