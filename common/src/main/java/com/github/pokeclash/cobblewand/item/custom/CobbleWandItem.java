@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -79,11 +78,6 @@ public class CobbleWandItem extends Item {
                 Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand", storge.wandData()));
             }
         }
-        return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    public @NotNull InteractionResult interactLivingEntity(ItemStack itemStack, Player player, LivingEntity livingEntity, InteractionHand interactionHand) {
         return InteractionResult.SUCCESS;
     }
 }

@@ -21,7 +21,7 @@ public record PokemonStorage(
     public static PokemonStorage defaultStorage() {
         return new PokemonStorage(
                 new CompoundTag(),
-                new WandData(Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty())
+                new WandData(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty())
         );
     }
 

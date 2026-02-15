@@ -1,6 +1,10 @@
 package com.github.pokeclash.cobblewand.ui.screen;
 
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.abilities.Abilities;
+import com.cobblemon.mod.common.api.abilities.Ability;
+import com.cobblemon.mod.common.api.abilities.AbilityTemplate;
+import com.cobblemon.mod.common.api.data.ShowdownIdentifiable;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.Natures;
@@ -25,54 +29,46 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class CobbleWandScreen extends Screen {
+    private final int BASE_WIDTH = 349;
+    private final int BASE_HEIGHT = 205;
+    private final int PORTRAIT_SIZE = 66;
+    private final Pokemon startPokemon = new Pokemon();
+    private final WandData wandData;
     private SuggestionEditBox speciesField;
     private EditBox aspectField;
     private SuggestionEditBox natureField;
+    private SuggestionEditBox abilityField;
     private SuggestionEditBox teraField;
-
     private SuggestionEditBox move1;
     private SuggestionEditBox move2;
     private SuggestionEditBox move3;
     private SuggestionEditBox move4;
-
     private NumericEditBox speedEV;
     private NumericEditBox attackEV;
     private NumericEditBox defenseEV;
     private NumericEditBox spAtkEV;
     private NumericEditBox spDefEV;
     private NumericEditBox hpEV;
-
     private NumericEditBox speedIV;
     private NumericEditBox attackIV;
     private NumericEditBox defenseIV;
     private NumericEditBox spAtkIV;
     private NumericEditBox spDefIV;
     private NumericEditBox hpIV;
-
     private NumericEditBox level;
     private NumericEditBox scale;
     private NumericEditBox friendShip;
     private NumericEditBox dmaxLevel;
-
     private ModelWidget modelWidget;
-
     private Checkbox gmaxFactor;
-
     private Checkbox statue;
-
-    private final int BASE_WIDTH = 349;
-    private final int BASE_HEIGHT = 205;
-    private final int PORTRAIT_SIZE = 66;
-
-    private final Pokemon startPokemon = new Pokemon();
-
-    private final WandData wandData;
 
     public CobbleWandScreen(String name, WandData wandData) {
         super(Component.translatable(name));
@@ -88,7 +84,7 @@ public class CobbleWandScreen extends Screen {
 
         speciesField = makeSuggestionEditBox(
                 guiX + 73,
-                guiY + 50,
+                guiY + 28,
                 "Pokemon",
                 PokemonSpecies.getSpecies()
                         .stream()
@@ -98,24 +94,34 @@ public class CobbleWandScreen extends Screen {
 
         teraField = makeSuggestionEditBox(
                 guiX + 175,
-                guiY + 50,
+                guiY + 51,
                 "Tera",
                 TeraTypesAccessor.getTypes().values()
                         .stream()
-                        .map(t -> t.showdownId().toLowerCase(Locale.ROOT))
+                        .map(ShowdownIdentifiable::showdownId)
                         .toList(),
                 70
         );
 
+        abilityField = makeSuggestionEditBox(
+                guiX + 73,
+                guiY + 51,
+                "Ability",
+                Abilities.all()
+                        .stream()
+                        .map(AbilityTemplate::getName)
+                        .toList()
+        );
+
         gmaxFactor = makeCheckBox(
                 guiX + 175,
-                guiY + 77,
+                guiY + 75,
                 "Gmax Factor"
         );
 
         statue = makeCheckBox(
                 guiX + 175,
-                guiY + 96,
+                guiY + 95,
                 "Statue"
         );
 
@@ -179,7 +185,7 @@ public class CobbleWandScreen extends Screen {
         applyWandDataToFields(wandData);
 
         setPokemonBasic();
-        
+
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
         modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
     }
@@ -200,6 +206,8 @@ public class CobbleWandScreen extends Screen {
         natureField.renderSuggestions(guiGraphics, this.font);
 
         teraField.renderSuggestions(guiGraphics, this.font);
+
+        abilityField.renderSuggestions(guiGraphics, this.font);
 
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
     }
@@ -232,6 +240,14 @@ public class CobbleWandScreen extends Screen {
             }
         }
 
+        if (!abilityField.getValue().isEmpty()) {
+            AbilityTemplate abilityTemplate = Abilities.get(abilityField.getValue());
+            if (abilityTemplate != null) {
+                Ability ability = abilityTemplate.create(new CompoundTag());
+                startPokemon.updateAbility(ability);
+            }
+        }
+
         if (dmaxLevel.getIntValue() != -1) {
             startPokemon.setDmaxLevel(dmaxLevel.getIntValue());
         }
@@ -259,6 +275,7 @@ public class CobbleWandScreen extends Screen {
         if (aspectField != null) aspectField.setValue("");
         if (natureField != null) natureField.setValue("");
         if (teraField != null) teraField.setValue("");
+        if (abilityField != null) abilityField.setValue("");
 
         if (move1 != null) move1.setValue("");
         if (move2 != null) move2.setValue("");
@@ -302,7 +319,8 @@ public class CobbleWandScreen extends Screen {
                         optionalString(speciesField),
                         optionalString(teraField),
                         optionalString(aspectField),
-                        optionalString(natureField)
+                        optionalString(natureField),
+                        optionalString(abilityField)
                 )),
                 Optional.of(new WandData.Flags(
                         optionalBool(gmaxFactor),
@@ -345,6 +363,7 @@ public class CobbleWandScreen extends Screen {
             basic.tera().ifPresent(teraField::setValue);
             basic.aspects().ifPresent(aspectField::setValue);
             basic.nature().ifPresent(natureField::setValue);
+            basic.ability().ifPresent(abilityField::setValue);
         });
 
         data.flags().ifPresent(flags -> {
