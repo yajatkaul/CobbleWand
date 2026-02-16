@@ -92,6 +92,9 @@ public class CobbleWandScreen extends Screen {
                         .map(s -> s.resourceIdentifier.getPath())
                         .toList()
         );
+        speciesField.setResponder((val) -> {
+            setPokemon(null, false);
+        });
 
         teraField = makeSuggestionEditBox(
                 guiX + 175,
@@ -132,6 +135,9 @@ public class CobbleWandScreen extends Screen {
                 "Aspects",
                 List.of()
         );
+        aspectField.setResponder((val) -> {
+            setPokemon(null, false);
+        });
 
         move1 = makeMoveBox(guiX + 73, guiY + 115, "Move 1");
         move2 = makeMoveBox(guiX + 175, guiY + 115, "Move 2");
@@ -175,7 +181,7 @@ public class CobbleWandScreen extends Screen {
         // Button
         this.addRenderableWidget(Button.builder(
                 Component.literal("Set"),
-                this::setPokemon
+                (button) -> setPokemon(button, true)
         ).bounds(guiX + 73, guiY + 190, 200, 20).build());
 
         this.addRenderableWidget(Button.builder(
@@ -213,7 +219,7 @@ public class CobbleWandScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
     }
 
-    private void setPokemon(Button button) {
+    private void setPokemon(Button button, boolean set) {
         int guiX = (this.width - BASE_WIDTH) / 2;
         int guiY = (this.height - BASE_HEIGHT) / 2;
 
@@ -265,10 +271,12 @@ public class CobbleWandScreen extends Screen {
         }
 
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
-
-        WandData newWandData = createWandData();
-        NetworkManager.sendToServer(new PokemonSetPacket(startPokemon, newWandData));
         modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
+
+        if (set) {
+            WandData newWandData = createWandData();
+            NetworkManager.sendToServer(new PokemonSetPacket(startPokemon, newWandData));
+        }
     }
 
     private void resetPokemon(Button button) {
@@ -306,7 +314,7 @@ public class CobbleWandScreen extends Screen {
         if (statue != null) statue.selected = false;
 
         startPokemon.setSpecies(PokemonSpecies.random());
-        setPokemon(null);
+        setPokemon(null, true);
     }
 
     @Override
