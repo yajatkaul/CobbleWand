@@ -30,8 +30,13 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,6 +56,7 @@ public class CobbleWandScreen extends Screen {
     private SuggestionEditBox move2;
     private SuggestionEditBox move3;
     private SuggestionEditBox move4;
+    private SuggestionEditBox heldItemField;
     private NumericEditBox speedEV;
     private NumericEditBox attackEV;
     private NumericEditBox defenseEV;
@@ -70,6 +76,8 @@ public class CobbleWandScreen extends Screen {
     private ModelWidget modelWidget;
     private Checkbox gmaxFactor;
     private Checkbox statue;
+
+    private Item renderItem = Items.AIR;
 
     public CobbleWandScreen(String name, WandData wandData) {
         super(Component.translatable(name));
@@ -92,9 +100,19 @@ public class CobbleWandScreen extends Screen {
                         .map(s -> s.resourceIdentifier.getPath())
                         .toList()
         );
-        speciesField.setResponder((val) -> {
-            setPokemon(null, false);
-        });
+        speciesField.setResponder((val) -> setPokemon(false));
+
+        heldItemField = makeSuggestionEditBox(
+                guiX + 175,
+                guiY + 28,
+                "Held Item",
+                BuiltInRegistries.ITEM
+                        .stream()
+                        .map(i -> BuiltInRegistries.ITEM.getKey(i).toString())
+                        .toList(),
+                200
+        );
+        heldItemField.setResponder((val) -> setItemRender(false));
 
         teraField = makeSuggestionEditBox(
                 guiX + 175,
@@ -135,9 +153,7 @@ public class CobbleWandScreen extends Screen {
                 "Aspects",
                 List.of()
         );
-        aspectField.setResponder((val) -> {
-            setPokemon(null, false);
-        });
+        aspectField.setResponder((val) -> setPokemon(false));
 
         move1 = makeMoveBox(guiX + 73, guiY + 115, "Move 1");
         move2 = makeMoveBox(guiX + 175, guiY + 115, "Move 2");
@@ -145,13 +161,13 @@ public class CobbleWandScreen extends Screen {
         move4 = makeMoveBox(guiX + 175, guiY + 140, "Move 4");
 
         // Left column
-        hpEV = this.createEVBox(guiX + 290, guiY + 40, "HP EV");
-        attackEV = this.createEVBox(guiX + 290, guiY + 60, "Atk EV");
-        defenseEV = this.createEVBox(guiX + 290, guiY + 80, "Def EV");
+        hpEV = this.createEVBox(guiX + 290, guiY + 60, "HP EV");
+        attackEV = this.createEVBox(guiX + 290, guiY + 80, "Atk EV");
+        defenseEV = this.createEVBox(guiX + 290, guiY + 100, "Def EV");
         // Right column
-        spAtkEV = this.createEVBox(guiX + 335, guiY + 40, "SpAtk EV");
-        spDefEV = this.createEVBox(guiX + 335, guiY + 60, "SpDef EV");
-        speedEV = this.createEVBox(guiX + 335, guiY + 80, "Spd EV");
+        spAtkEV = this.createEVBox(guiX + 335, guiY + 60, "SpAtk EV");
+        spDefEV = this.createEVBox(guiX + 335, guiY + 80, "SpDef EV");
+        speedEV = this.createEVBox(guiX + 335, guiY + 100, "Spd EV");
 
         // Left column IVs
         hpIV = this.createIVBox(guiX + 290, guiY + 130, "HP IV");
@@ -181,7 +197,7 @@ public class CobbleWandScreen extends Screen {
         // Button
         this.addRenderableWidget(Button.builder(
                 Component.literal("Set"),
-                (button) -> setPokemon(button, true)
+                (button) -> setPokemon(true)
         ).bounds(guiX + 73, guiY + 190, 200, 20).build());
 
         this.addRenderableWidget(Button.builder(
@@ -201,6 +217,13 @@ public class CobbleWandScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (renderItem != null) {
+            int guiX = (this.width - BASE_WIDTH) / 2;
+            int guiY = (this.height - BASE_HEIGHT) / 2;
+            guiGraphics.renderItem(renderItem.getDefaultInstance(), guiX + 50, guiY + 140);
+        }
+
         modelWidget.render(guiGraphics, mouseX, mouseY, partialTick);
 
         speciesField.renderSuggestions(guiGraphics, this.font);
@@ -209,6 +232,8 @@ public class CobbleWandScreen extends Screen {
         move2.renderSuggestions(guiGraphics, this.font);
         move3.renderSuggestions(guiGraphics, this.font);
         move4.renderSuggestions(guiGraphics, this.font);
+
+        heldItemField.renderSuggestions(guiGraphics, this.font);
 
         natureField.renderSuggestions(guiGraphics, this.font);
 
@@ -219,7 +244,7 @@ public class CobbleWandScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
     }
 
-    private void setPokemon(Button button, boolean set) {
+    private void setPokemon(boolean set) {
         int guiX = (this.width - BASE_WIDTH) / 2;
         int guiY = (this.height - BASE_HEIGHT) / 2;
 
@@ -246,6 +271,8 @@ public class CobbleWandScreen extends Screen {
                 startPokemon.setNature(nature);
             }
         }
+
+        setItemRender(true);
 
         if (!abilityField.getValue().isEmpty()) {
             AbilityTemplate abilityTemplate = Abilities.get(abilityField.getValue());
@@ -279,12 +306,26 @@ public class CobbleWandScreen extends Screen {
         }
     }
 
+    private void setItemRender(boolean set) {
+        if (!heldItemField.getValue().isEmpty()) {
+            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(heldItemField.getValue()));
+            if (item != Items.AIR) {
+                renderItem = item;
+                if (set) {
+                    startPokemon.setHeldItem$common(item.getDefaultInstance());
+
+                }
+            }
+        }
+    }
+
     private void resetPokemon(Button button) {
         if (speciesField != null) speciesField.setValue("");
         if (aspectField != null) aspectField.setValue("");
         if (natureField != null) natureField.setValue("");
         if (teraField != null) teraField.setValue("");
         if (abilityField != null) abilityField.setValue("");
+        if (heldItemField != null) heldItemField.setValue("");
 
         if (move1 != null) move1.setValue("");
         if (move2 != null) move2.setValue("");
@@ -314,7 +355,7 @@ public class CobbleWandScreen extends Screen {
         if (statue != null) statue.selected = false;
 
         startPokemon.setSpecies(PokemonSpecies.random());
-        setPokemon(null, true);
+        setPokemon(true);
     }
 
     @Override
@@ -329,7 +370,8 @@ public class CobbleWandScreen extends Screen {
                         optionalString(teraField),
                         optionalString(aspectField),
                         optionalString(natureField),
-                        optionalString(abilityField)
+                        optionalString(abilityField),
+                        optionalString(heldItemField)
                 )),
                 Optional.of(new WandData.Flags(
                         optionalBool(gmaxFactor),
@@ -373,6 +415,7 @@ public class CobbleWandScreen extends Screen {
             basic.aspects().ifPresent(aspectField::setValue);
             basic.nature().ifPresent(natureField::setValue);
             basic.ability().ifPresent(abilityField::setValue);
+            basic.held_item().ifPresent(heldItemField::setValue);
         });
 
         data.flags().ifPresent(flags -> {
@@ -456,6 +499,8 @@ public class CobbleWandScreen extends Screen {
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toSet());
             startPokemon.setForcedAspects(aspects);
+        } else {
+            startPokemon.setForcedAspects(Set.of());
         }
     }
 

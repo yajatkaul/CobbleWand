@@ -64,14 +64,16 @@ public record WandData(
             Optional<String> tera,
             Optional<String> aspects,
             Optional<String> nature,
-            Optional<String> ability
+            Optional<String> ability,
+            Optional<String> held_item
     ) {
         public static final Codec<BasicData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("species").forGetter(BasicData::species),
                 Codec.STRING.optionalFieldOf("tera").forGetter(BasicData::tera),
                 Codec.STRING.optionalFieldOf("aspects").forGetter(BasicData::aspects),
                 Codec.STRING.optionalFieldOf("nature").forGetter(BasicData::nature),
-                Codec.STRING.optionalFieldOf("ability").forGetter(BasicData::ability)
+                Codec.STRING.optionalFieldOf("ability").forGetter(BasicData::ability),
+                Codec.STRING.optionalFieldOf("held_item").forGetter(BasicData::held_item)
         ).apply(instance, BasicData::new));
 
         public static final StreamCodec<ByteBuf, BasicData> STREAM_CODEC =
@@ -81,6 +83,7 @@ public record WandData(
                         ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), BasicData::aspects,
                         ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), BasicData::nature,
                         ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), BasicData::ability,
+                        ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), BasicData::held_item,
                         BasicData::new
                 );
     }
