@@ -1,6 +1,8 @@
 package com.github.pokeclash.cobblewand.network.server;
 
+import com.github.pokeclash.cobblewand.network.server.handler.PokemonAddHandler;
 import com.github.pokeclash.cobblewand.network.server.handler.PokemonSetHandler;
+import com.github.pokeclash.cobblewand.network.server.packet.PokemonAddPacket;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
@@ -25,6 +27,13 @@ public class CobbleWandNetworkHandlerServer {
                 PokemonSetPacket.TYPE,
                 PokemonSetPacket.STREAM_CODEC,
                 PokemonSetHandler::handle
+        );
+
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
+                PokemonAddPacket.TYPE,
+                PokemonAddPacket.STREAM_CODEC,
+                PokemonAddHandler::handle
         );
     }
 }

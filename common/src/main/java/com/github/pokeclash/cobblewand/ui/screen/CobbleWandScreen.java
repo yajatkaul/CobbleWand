@@ -20,6 +20,7 @@ import com.cobblemon.mod.common.pokemon.Species;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
+import com.github.pokeclash.cobblewand.network.server.packet.PokemonAddPacket;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import com.github.pokeclash.cobblewand.ui.util.FloatEditBox;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
@@ -29,14 +30,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.*;
@@ -199,12 +198,17 @@ public class CobbleWandScreen extends Screen {
         this.addRenderableWidget(Button.builder(
                 Component.literal("Set"),
                 (button) -> setPokemon(true)
-        ).bounds(guiX + 73, guiY + 190, 200, 20).build());
+        ).bounds(guiX + 73, guiY + 190, 80, 20).build());
 
         this.addRenderableWidget(Button.builder(
                 Component.literal("Reset"),
                 this::resetPokemon
         ).bounds(guiX - 10, guiY + 190, 80, 20).build());
+
+        this.addRenderableWidget(Button.builder(
+                Component.literal("Add To Party"),
+                this::addToParty
+        ).bounds(guiX + 155, guiY + 190, 80, 20).build());
 
         applyWandDataToFields(wandData);
 
@@ -212,6 +216,10 @@ public class CobbleWandScreen extends Screen {
 
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
         modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
+    }
+
+    private void addToParty(Button button) {
+        NetworkManager.sendToServer(new PokemonAddPacket(startPokemon));
     }
 
     @Override
