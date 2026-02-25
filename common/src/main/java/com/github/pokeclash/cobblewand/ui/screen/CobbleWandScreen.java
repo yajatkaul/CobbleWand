@@ -29,6 +29,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -215,7 +216,6 @@ public class CobbleWandScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         if (renderItem != null) {
@@ -308,12 +308,11 @@ public class CobbleWandScreen extends Screen {
 
     private void setItemRender(boolean set) {
         if (!heldItemField.getValue().isEmpty()) {
-            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(heldItemField.getValue()));
+            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(heldItemField.getValue().toLowerCase(Locale.ROOT)));
             if (item != Items.AIR) {
                 renderItem = item;
                 if (set) {
                     startPokemon.setHeldItem$common(item.getDefaultInstance());
-
                 }
             }
         }
@@ -487,7 +486,7 @@ public class CobbleWandScreen extends Screen {
 
     private void setPokemonBasic() {
         if (!speciesField.getValue().isEmpty()) {
-            Species pokemonSpecies = PokemonSpecies.getByName(speciesField.getValue());
+            Species pokemonSpecies = PokemonSpecies.getByName(speciesField.getValue().toLowerCase(Locale.ROOT));
             if (pokemonSpecies != null) {
                 startPokemon.setSpecies(pokemonSpecies);
             }

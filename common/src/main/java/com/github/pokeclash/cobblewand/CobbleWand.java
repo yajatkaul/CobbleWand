@@ -20,7 +20,6 @@ public final class CobbleWand {
         CobbleWandTab.register();
         CobbleWandComponents.register();
         CobbleWandNetworkHandlerServer.register();
-
         LifecycleEvent.SERVER_STARTED.register((server) -> {
             minecraftServer = server;
         });
