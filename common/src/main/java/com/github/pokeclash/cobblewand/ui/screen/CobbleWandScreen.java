@@ -157,6 +157,7 @@ public class CobbleWandScreen extends Screen {
                         .toList(),
                 128
         );
+        pokeBallField.setResponder((val) -> setPokeball(false));
 
         gmaxFactor = makeCheckBox(
                 guiX + 175,
@@ -260,16 +261,10 @@ public class CobbleWandScreen extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    private Item pokeBall = null;
+
     private void addToParty(Button button) {
-        if (!pokeBallField.getValue().isEmpty()) {
-            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:"+pokeBallField.getValue());
-            if (resourceLocation != null) {
-                PokeBall pokeBall = PokeBalls.getPokeBall(resourceLocation);
-                if (pokeBall != null) {
-                    startPokemon.setCaughtBall(pokeBall);
-                }
-            }
-        }
+        setPokeball(true);
         NetworkManager.sendToServer(new PokemonAddPacket(startPokemon));
     }
 
@@ -281,6 +276,12 @@ public class CobbleWandScreen extends Screen {
             int guiX = (this.width - BASE_WIDTH) / 2;
             int guiY = (this.height - BASE_HEIGHT) / 2;
             guiGraphics.renderItem(renderItem.getDefaultInstance(), guiX + 50, guiY + 140);
+        }
+
+        if (pokeBall != null) {
+            int guiX = (this.width - BASE_WIDTH) / 2;
+            int guiY = (this.height - BASE_HEIGHT) / 2;
+            guiGraphics.renderItem(pokeBall.getDefaultInstance(), guiX + 230, guiY + 9);
         }
 
         modelWidget.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -388,6 +389,23 @@ public class CobbleWandScreen extends Screen {
         }
     }
 
+    private void setPokeball(boolean set) {
+        if (!pokeBallField.getValue().isEmpty()) {
+            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:"+pokeBallField.getValue());
+            if (resourceLocation != null) {
+                PokeBall pokeBall = PokeBalls.getPokeBall(resourceLocation);
+                if (pokeBall != null) {
+                    if (set) {
+                        startPokemon.setCaughtBall(pokeBall);
+                    }
+                    this.pokeBall = pokeBall.item;
+                } else {
+                    this.pokeBall = null;
+                }
+            }
+        }
+    }
+
     private void resetPokemon(Button button) {
         if (speciesField != null) speciesField.setValue("");
         if (aspectField != null) aspectField.setValue("");
@@ -395,6 +413,7 @@ public class CobbleWandScreen extends Screen {
         if (teraField != null) teraField.setValue("");
         if (abilityField != null) abilityField.setValue("");
         if (heldItemField != null) heldItemField.setValue("");
+        if (pokeBallField != null) pokeBallField.setValue("");
 
         if (move1 != null) move1.setValue("");
         if (move2 != null) move2.setValue("");
@@ -444,7 +463,8 @@ public class CobbleWandScreen extends Screen {
                 )),
                 Optional.of(new WandData.Flags(
                         optionalBool(gmaxFactor),
-                        optionalBool(statue)
+                        optionalBool(statue),
+                        optionalString(pokeBallField)
                 )),
                 Optional.of(new WandData.MoveSet(
                         optionalString(move1),
@@ -488,12 +508,9 @@ public class CobbleWandScreen extends Screen {
         });
 
         data.flags().ifPresent(flags -> {
-            flags.gmaxFactor().ifPresent((val) -> {
-                gmaxFactor.selected = val;
-            });
-            flags.statue().ifPresent((val) -> {
-                statue.selected = val;
-            });
+            flags.gmaxFactor().ifPresent((val) -> {gmaxFactor.selected = val;});
+            flags.statue().ifPresent((val) -> {statue.selected = val;});
+            flags.pokeball().ifPresent(pokeBallField::setValue);
         });
 
         data.moves().ifPresent(moves -> {

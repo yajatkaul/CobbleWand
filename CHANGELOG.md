@@ -1,3 +1,2 @@
-# 1.2 
-- Fixed clicking priority in screen
-- Added Gender and pokeball field
+# 1.3
+- GUI Improvement

@@ -90,17 +90,20 @@ public record WandData(
 
     public record Flags(
             Optional<Boolean> gmaxFactor,
-            Optional<Boolean> statue
+            Optional<Boolean> statue,
+            Optional<String> pokeball
     ) {
         public static final Codec<Flags> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.BOOL.optionalFieldOf("gmaxFactor").forGetter(Flags::gmaxFactor),
-                Codec.BOOL.optionalFieldOf("statue").forGetter(Flags::statue)
+                Codec.BOOL.optionalFieldOf("statue").forGetter(Flags::statue),
+                Codec.STRING.optionalFieldOf("pokeball").forGetter(Flags::pokeball)
         ).apply(instance, Flags::new));
 
         public static final StreamCodec<ByteBuf, Flags> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.optional(ByteBufCodecs.BOOL), Flags::gmaxFactor,
                         ByteBufCodecs.optional(ByteBufCodecs.BOOL), Flags::statue,
+                        ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), Flags::pokeball,
                         Flags::new
                 );
     }
