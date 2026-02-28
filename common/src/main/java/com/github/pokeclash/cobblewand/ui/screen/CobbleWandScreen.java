@@ -7,16 +7,15 @@ import com.cobblemon.mod.common.api.abilities.AbilityTemplate;
 import com.cobblemon.mod.common.api.data.ShowdownIdentifiable;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
+import com.cobblemon.mod.common.api.pokeball.PokeBalls;
 import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.api.types.tera.TeraType;
 import com.cobblemon.mod.common.api.types.tera.TeraTypes;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
-import com.cobblemon.mod.common.pokemon.Nature;
-import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.cobblemon.mod.common.pokemon.RenderablePokemon;
-import com.cobblemon.mod.common.pokemon.Species;
+import com.cobblemon.mod.common.pokeball.PokeBall;
+import com.cobblemon.mod.common.pokemon.*;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
@@ -57,6 +56,8 @@ public class CobbleWandScreen extends Screen {
     private SuggestionEditBox move3;
     private SuggestionEditBox move4;
     private SuggestionEditBox heldItemField;
+    private SuggestionEditBox genderField;
+    private SuggestionEditBox pokeBallField;
     private NumericEditBox speedEV;
     private NumericEditBox attackEV;
     private NumericEditBox defenseEV;
@@ -133,6 +134,28 @@ public class CobbleWandScreen extends Screen {
                         .stream()
                         .map(AbilityTemplate::getName)
                         .toList()
+        );
+
+        genderField = makeSuggestionEditBox(
+                guiX + 247,
+                guiY + 51,
+                "G",
+                Arrays.stream(Gender.values())
+                        .toList().stream()
+                        .map(Gender::getShowdownName)
+                        .toList(),
+                20
+        );
+
+        pokeBallField = makeSuggestionEditBox(
+                guiX + 247,
+                guiY + 7,
+                "Pokeball",
+                PokeBalls.all()
+                        .stream()
+                        .map((p) -> p.getName().getPath())
+                        .toList(),
+                128
         );
 
         gmaxFactor = makeCheckBox(
@@ -218,7 +241,35 @@ public class CobbleWandScreen extends Screen {
         modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
     }
 
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+
+        speciesField.mouseClicked(mouseX, mouseY, button);
+        move1.mouseClicked(mouseX, mouseY, button);
+        move2.mouseClicked(mouseX, mouseY, button);
+        move3.mouseClicked(mouseX, mouseY, button);
+        move4.mouseClicked(mouseX, mouseY, button);
+
+        heldItemField.mouseClicked(mouseX, mouseY, button);
+        natureField.mouseClicked(mouseX, mouseY, button);
+        teraField.mouseClicked(mouseX, mouseY, button);
+        abilityField.mouseClicked(mouseX, mouseY, button);
+        genderField.mouseClicked(mouseX, mouseY, button);
+        pokeBallField.mouseClicked(mouseX, mouseY, button);
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     private void addToParty(Button button) {
+        if (!pokeBallField.getValue().isEmpty()) {
+            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:"+pokeBallField.getValue());
+            if (resourceLocation != null) {
+                PokeBall pokeBall = PokeBalls.getPokeBall(resourceLocation);
+                if (pokeBall != null) {
+                    startPokemon.setCaughtBall(pokeBall);
+                }
+            }
+        }
         NetworkManager.sendToServer(new PokemonAddPacket(startPokemon));
     }
 
@@ -249,6 +300,10 @@ public class CobbleWandScreen extends Screen {
 
         abilityField.renderSuggestions(guiGraphics, this.font);
 
+        genderField.renderSuggestions(guiGraphics, this.font);
+
+        pokeBallField.renderSuggestions(guiGraphics, this.font);
+
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
     }
 
@@ -274,9 +329,16 @@ public class CobbleWandScreen extends Screen {
         }
 
         if (!natureField.getValue().isEmpty()) {
-            Nature nature = Natures.getNature(speciesField.getValue());
+            Nature nature = Natures.getNature(natureField.getValue());
             if (nature != null) {
                 startPokemon.setNature(nature);
+            }
+        }
+
+        if (!genderField.getValue().isEmpty()) {
+            Gender gender = Gender.valueOf(genderField.getValue());
+            if (gender != null) {
+                startPokemon.setGender(gender);
             }
         }
 
