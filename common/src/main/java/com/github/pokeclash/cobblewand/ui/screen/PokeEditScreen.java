@@ -14,17 +14,13 @@ import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.api.types.tera.TeraType;
 import com.cobblemon.mod.common.api.types.tera.TeraTypes;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
-import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.*;
-import com.cobblemon.mod.common.pokemon.properties.AspectPropertyType;
-import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonAddPacket;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonEditPacket;
-import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import com.github.pokeclash.cobblewand.ui.util.FloatEditBox;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
 import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
@@ -39,7 +35,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -86,6 +81,7 @@ public class PokeEditScreen extends Screen {
     private final UUID uuid;
 
     private Item renderItem = Items.AIR;
+
     public PokeEditScreen(String name, Pokemon pokemon, RegistryAccess registryAccess, UUID uuid) {
         super(Component.translatable(name));
         this.pokemon = pokemon;
@@ -396,7 +392,7 @@ public class PokeEditScreen extends Screen {
 
     private void setPokeball(boolean set) {
         if (!pokeBallField.getValue().isEmpty()) {
-            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:"+pokeBallField.getValue());
+            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:" + pokeBallField.getValue());
             if (resourceLocation != null) {
                 PokeBall pokeBall = PokeBalls.getPokeBall(resourceLocation);
                 if (pokeBall != null) {

@@ -2,7 +2,6 @@ package com.github.pokeclash.cobblewand.network.server.packet;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.github.pokeclash.cobblewand.CobbleWand;
-import com.github.pokeclash.cobblewand.codec.WandData;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

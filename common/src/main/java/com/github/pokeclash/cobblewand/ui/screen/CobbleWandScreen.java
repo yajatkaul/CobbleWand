@@ -391,7 +391,7 @@ public class CobbleWandScreen extends Screen {
 
     private void setPokeball(boolean set) {
         if (!pokeBallField.getValue().isEmpty()) {
-            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:"+pokeBallField.getValue());
+            ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:" + pokeBallField.getValue());
             if (resourceLocation != null) {
                 PokeBall pokeBall = PokeBalls.getPokeBall(resourceLocation);
                 if (pokeBall != null) {
@@ -508,8 +508,12 @@ public class CobbleWandScreen extends Screen {
         });
 
         data.flags().ifPresent(flags -> {
-            flags.gmaxFactor().ifPresent((val) -> {gmaxFactor.selected = val;});
-            flags.statue().ifPresent((val) -> {statue.selected = val;});
+            flags.gmaxFactor().ifPresent((val) -> {
+                gmaxFactor.selected = val;
+            });
+            flags.statue().ifPresent((val) -> {
+                statue.selected = val;
+            });
             flags.pokeball().ifPresent(pokeBallField::setValue);
         });
 

@@ -6,19 +6,12 @@ import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.AspectPropertyType;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
-import com.github.pokeclash.cobblewand.CobbleWand;
 import com.github.pokeclash.cobblewand.codec.WandData;
-import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
-import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonEditPacket;
-import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import dev.architectury.networking.NetworkManager;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 
 public class PokemonEditHandler {
     public static void handle(PokemonEditPacket pokemonEditPacket, NetworkManager.PacketContext packetContext) {
@@ -30,7 +23,7 @@ public class PokemonEditHandler {
 
         if (pokemon.isNPCOwned() || pokemon.isPlayerOwned()) {
             if (newWandData.flags().isPresent()) {
-                ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:"+newWandData.flags().get());
+                ResourceLocation resourceLocation = ResourceLocation.tryParse("cobblemon:" + newWandData.flags().get());
                 if (resourceLocation != null) {
                     PokeBall pokeBall = PokeBalls.getPokeBall(resourceLocation);
                     if (pokeBall != null) {

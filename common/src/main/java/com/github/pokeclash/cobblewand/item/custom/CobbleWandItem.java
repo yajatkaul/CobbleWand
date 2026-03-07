@@ -7,10 +7,8 @@ import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
-import com.github.pokeclash.cobblewand.ui.screen.CobbleWandScreen;
-import com.github.pokeclash.cobblewand.ui.screen.PokeEditScreen;
+import com.github.pokeclash.cobblewand.platform.CobbleWandClientPlatform;
 import kotlin.Unit;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -40,7 +38,7 @@ public class CobbleWandItem extends Item {
         PokemonStorage storage = stack.getOrDefault(CobbleWandComponents.POKEMON_STORAGE.get(), PokemonStorage.defaultStorage());
 
         if (level.isClientSide) {
-            Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand", storage.wandData()));
+            CobbleWandClientPlatform.openWandScreen(storage.wandData());
         }
 
         return super.use(level, player, hand);
@@ -79,7 +77,7 @@ public class CobbleWandItem extends Item {
             }
         } else {
             if (level.isClientSide) {
-                Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand", storge.wandData()));
+                CobbleWandClientPlatform.openWandScreen(storge.wandData());
             }
         }
         return InteractionResult.SUCCESS;
@@ -89,7 +87,11 @@ public class CobbleWandItem extends Item {
     public @NotNull InteractionResult interactLivingEntity(ItemStack itemStack, Player player, LivingEntity livingEntity, InteractionHand interactionHand) {
         if (player.level().isClientSide) {
             if (livingEntity instanceof PokemonEntity pokemonEntity) {
-                Minecraft.getInstance().setScreen(new PokeEditScreen("Cobble Wand", pokemonEntity.getPokemon(), player.registryAccess(), pokemonEntity.getUUID()));
+                CobbleWandClientPlatform.openPokemonEditor(
+                        pokemonEntity.getPokemon(),
+                        player.registryAccess(),
+                        pokemonEntity.getUUID()
+                );
             }
         }
 

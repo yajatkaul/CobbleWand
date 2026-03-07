@@ -10,7 +10,7 @@ public class FloatEditBox extends EditBox {
     private final float max;
 
     public FloatEditBox(Font font, int x, int y, int width, int height,
-                               Component message, float min, float max) {
+                        Component message, float min, float max) {
         super(font, x, y, width, height, message);
         this.min = min;
         this.max = max;
