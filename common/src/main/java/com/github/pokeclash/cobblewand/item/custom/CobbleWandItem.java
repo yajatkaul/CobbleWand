@@ -8,6 +8,7 @@ import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
 import com.github.pokeclash.cobblewand.ui.screen.CobbleWandScreen;
+import com.github.pokeclash.cobblewand.ui.screen.PokeEditScreen;
 import kotlin.Unit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -80,6 +82,17 @@ public class CobbleWandItem extends Item {
                 Minecraft.getInstance().setScreen(new CobbleWandScreen("Cobble Wand", storge.wandData()));
             }
         }
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public @NotNull InteractionResult interactLivingEntity(ItemStack itemStack, Player player, LivingEntity livingEntity, InteractionHand interactionHand) {
+        if (player.level().isClientSide) {
+            if (livingEntity instanceof PokemonEntity pokemonEntity) {
+                Minecraft.getInstance().setScreen(new PokeEditScreen("Cobble Wand", pokemonEntity.getPokemon(), player.registryAccess(), pokemonEntity.getUUID()));
+            }
+        }
+
         return InteractionResult.SUCCESS;
     }
 }
