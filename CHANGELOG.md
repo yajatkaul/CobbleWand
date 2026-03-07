@@ -1,2 +1,3 @@
-# 1.3
-- GUI Improvement
+# 1.4
+- Added pokeedit feature 
+- Fixed server crashing
