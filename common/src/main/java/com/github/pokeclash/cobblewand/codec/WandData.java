@@ -91,12 +91,16 @@ public record WandData(
     public record Flags(
             Optional<Boolean> gmaxFactor,
             Optional<Boolean> statue,
-            Optional<String> pokeball
+            Optional<String> pokeball,
+            Optional<Boolean> canBattle,
+            Optional<Boolean> canCatch
     ) {
         public static final Codec<Flags> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.BOOL.optionalFieldOf("gmaxFactor").forGetter(Flags::gmaxFactor),
                 Codec.BOOL.optionalFieldOf("statue").forGetter(Flags::statue),
-                Codec.STRING.optionalFieldOf("pokeball").forGetter(Flags::pokeball)
+                Codec.STRING.optionalFieldOf("pokeball").forGetter(Flags::pokeball),
+                Codec.BOOL.optionalFieldOf("canBattle").forGetter(Flags::canBattle),
+                Codec.BOOL.optionalFieldOf("canCatch").forGetter(Flags::canCatch)
         ).apply(instance, Flags::new));
 
         public static final StreamCodec<ByteBuf, Flags> STREAM_CODEC =
@@ -104,6 +108,8 @@ public record WandData(
                         ByteBufCodecs.optional(ByteBufCodecs.BOOL), Flags::gmaxFactor,
                         ByteBufCodecs.optional(ByteBufCodecs.BOOL), Flags::statue,
                         ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), Flags::pokeball,
+                        ByteBufCodecs.optional(ByteBufCodecs.BOOL), Flags::canBattle,
+                        ByteBufCodecs.optional(ByteBufCodecs.BOOL), Flags::canCatch,
                         Flags::new
                 );
     }

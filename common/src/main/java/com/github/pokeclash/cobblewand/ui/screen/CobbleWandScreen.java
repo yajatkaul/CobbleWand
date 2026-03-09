@@ -16,6 +16,9 @@ import com.cobblemon.mod.common.api.types.tera.TeraTypes;
 import com.cobblemon.mod.common.client.gui.trade.ModelWidget;
 import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.*;
+import com.cobblemon.mod.common.pokemon.properties.AspectPropertyType;
+import com.cobblemon.mod.common.pokemon.properties.UnaspectPropertyType;
+import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
@@ -77,6 +80,8 @@ public class CobbleWandScreen extends Screen {
     private ModelWidget modelWidget;
     private Checkbox gmaxFactor;
     private Checkbox statue;
+    private Checkbox canFight;
+    private Checkbox canCatch;
 
     private Item renderItem = Items.AIR;
 
@@ -164,6 +169,20 @@ public class CobbleWandScreen extends Screen {
                 guiY + 75,
                 "Gmax Factor"
         );
+
+        canFight = makeCheckBox(
+                guiX + 240,
+                guiY + 200,
+                "Can Battle"
+        );
+        canFight.selected = true;
+
+        canCatch = makeCheckBox(
+                guiX + 313,
+                guiY + 200,
+                "Can Catch"
+        );
+        canCatch.selected = true;
 
         statue = makeCheckBox(
                 guiX + 175,
@@ -366,6 +385,20 @@ public class CobbleWandScreen extends Screen {
 
         if (gmaxFactor.selected()) {
             startPokemon.setGmaxFactor(true);
+        } else {
+            startPokemon.setGmaxFactor(false);
+        }
+
+        if (canFight.selected()) {
+            AspectPropertyType.INSTANCE.fromString("cant_battle").apply(startPokemon);
+        } else {
+            UnaspectPropertyType.INSTANCE.fromString("cant_battle").apply(startPokemon);
+        }
+
+        if (!canCatch.selected()) {
+            UncatchableProperty.INSTANCE.uncatchable().apply(startPokemon);
+        } else {
+            UncatchableProperty.INSTANCE.catchable().apply(startPokemon);
         }
 
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
@@ -441,6 +474,8 @@ public class CobbleWandScreen extends Screen {
 
         if (gmaxFactor != null) gmaxFactor.selected = false;
         if (statue != null) statue.selected = false;
+        if (canFight != null) canFight.selected = true;
+        if (canCatch != null) canCatch.selected = true;
 
         startPokemon.setSpecies(PokemonSpecies.random());
         setPokemon(true);
@@ -464,7 +499,9 @@ public class CobbleWandScreen extends Screen {
                 Optional.of(new WandData.Flags(
                         optionalBool(gmaxFactor),
                         optionalBool(statue),
-                        optionalString(pokeBallField)
+                        optionalString(pokeBallField),
+                        optionalBool(canFight),
+                        optionalBool(canCatch)
                 )),
                 Optional.of(new WandData.MoveSet(
                         optionalString(move1),
@@ -515,6 +552,12 @@ public class CobbleWandScreen extends Screen {
                 statue.selected = val;
             });
             flags.pokeball().ifPresent(pokeBallField::setValue);
+            flags.canBattle().ifPresent((val) -> {
+                canFight.selected = val;
+            });
+            flags.canCatch().ifPresent((val) -> {
+                canCatch.selected = val;
+            });
         });
 
         data.moves().ifPresent(moves -> {

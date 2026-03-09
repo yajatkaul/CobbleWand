@@ -3,6 +3,7 @@ package com.github.pokeclash.cobblewand.item.custom;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.AspectPropertyType;
+import com.cobblemon.mod.common.pokemon.properties.UnaspectPropertyType;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
@@ -62,8 +63,30 @@ public class CobbleWandItem extends Item {
                             pokemonEntity.setPersistenceRequired();
                             UncatchableProperty.INSTANCE.uncatchable().apply(pokemon);
                             pokemonEntity.noPhysics = true;
-                            AspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemon);
+                            AspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemonEntity.getPokemon());
+                        } else {
+                            pokemonEntity.setNoAi(false);
+                            UncatchableProperty.INSTANCE.catchable().apply(pokemon);
+                            pokemonEntity.noPhysics = false;
+                            UnaspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemonEntity.getPokemon());
+                        }
+                    });
+
+                    storge.wandData().flags().flatMap(WandData.Flags::canBattle).ifPresent((canBattle) -> {
+                        if (!canBattle) {
+                            UnaspectPropertyType.INSTANCE.fromString("cant_battle").apply(pokemonEntity.getPokemon());
                             pokemonEntity.getEntityData().set(PokemonEntity.Companion.getHIDE_LABEL(), true);
+                        } else {
+                            AspectPropertyType.INSTANCE.fromString("cant_battle").apply(pokemonEntity.getPokemon());
+                            pokemonEntity.getEntityData().set(PokemonEntity.Companion.getHIDE_LABEL(), false);
+                        }
+                    });
+
+                    storge.wandData().flags().flatMap(WandData.Flags::canCatch).ifPresent((canCatch) -> {
+                        if (!canCatch) {
+                            UncatchableProperty.INSTANCE.uncatchable().apply(pokemonEntity);
+                        } else {
+                            UncatchableProperty.INSTANCE.catchable().apply(pokemonEntity);
                         }
                     });
 

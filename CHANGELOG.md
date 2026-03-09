@@ -1,3 +1,2 @@
-# 1.4
-- Added pokeedit feature 
-- Fixed server crashing
+# 1.5
+- More options
