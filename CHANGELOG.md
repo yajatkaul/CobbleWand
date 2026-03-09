@@ -1,2 +1,2 @@
-# 1.5
-- More options
+# 1.5.1
+- Fixed more crashes
