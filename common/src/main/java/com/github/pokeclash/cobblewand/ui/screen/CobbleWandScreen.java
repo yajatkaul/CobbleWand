@@ -135,10 +135,7 @@ public class CobbleWandScreen extends Screen {
                 guiX + 73,
                 guiY + 51,
                 "Ability",
-                Abilities.all()
-                        .stream()
-                        .map(AbilityTemplate::getName)
-                        .toList()
+                getAbilitySuggestions(startPokemon)
         );
 
         genderField = makeSuggestionEditBox(
@@ -256,6 +253,7 @@ public class CobbleWandScreen extends Screen {
         applyWandDataToFields(wandData);
 
         setPokemonBasic();
+        refreshAbilitySuggestions();
 
         RenderablePokemon renderablePokemon = startPokemon.asRenderablePokemon();
         modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
@@ -366,7 +364,7 @@ public class CobbleWandScreen extends Screen {
 
         if (!abilityField.getValue().isEmpty()) {
             AbilityTemplate abilityTemplate = Abilities.get(abilityField.getValue());
-            if (abilityTemplate != null) {
+            if (abilityTemplate != null && isAllowedAbility(startPokemon, abilityTemplate.getName())) {
                 Ability ability = abilityTemplate.create(new CompoundTag());
                 startPokemon.updateAbility(ability);
             }
@@ -635,6 +633,30 @@ public class CobbleWandScreen extends Screen {
         } else {
             startPokemon.setForcedAspects(Set.of());
         }
+
+        refreshAbilitySuggestions();
+    }
+
+    private void refreshAbilitySuggestions() {
+        List<String> abilities = getAbilitySuggestions(startPokemon);
+        abilityField.setSuggestions(abilities);
+
+        String selectedAbility = abilityField.getValue();
+        if (!selectedAbility.isEmpty() && abilities.stream().noneMatch(a -> a.equalsIgnoreCase(selectedAbility))) {
+            abilityField.setValue("");
+        }
+    }
+
+    private List<String> getAbilitySuggestions(Pokemon pokemon) {
+        return pokemon.getForm().getAbilities().stream()
+                .map(AbilityTemplate::getName)
+                .distinct()
+                .toList();
+    }
+
+    private boolean isAllowedAbility(Pokemon pokemon, String abilityName) {
+        return getAbilitySuggestions(pokemon).stream()
+                .anyMatch(name -> name.equalsIgnoreCase(abilityName));
     }
 
     private void setMoves(Pokemon pokemon) {

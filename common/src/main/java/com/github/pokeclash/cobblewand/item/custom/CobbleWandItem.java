@@ -8,8 +8,12 @@ import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
+import com.github.pokeclash.cobblewand.network.server.packet.OpenWandMenuRequestPacket;
 import com.github.pokeclash.cobblewand.platform.CobbleWandClientPlatform;
+import com.github.pokeclash.cobblewand.permission.CobbleWandPermissionService;
+import com.github.pokeclash.cobblewand.permission.CobbleWandPermissions;
 import kotlin.Unit;
+import dev.architectury.networking.NetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -22,6 +26,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
 public class CobbleWandItem extends Item {
@@ -36,13 +41,12 @@ public class CobbleWandItem extends Item {
             return InteractionResultHolder.pass(stack);
         }
 
-        PokemonStorage storage = stack.getOrDefault(CobbleWandComponents.POKEMON_STORAGE.get(), PokemonStorage.defaultStorage());
-
         if (level.isClientSide) {
-            CobbleWandClientPlatform.openWandScreen(storage.wandData());
+            NetworkManager.sendToServer(new OpenWandMenuRequestPacket());
+            return InteractionResultHolder.success(stack);
         }
 
-        return super.use(level, player, hand);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
     @Override
@@ -58,26 +62,45 @@ public class CobbleWandItem extends Item {
                 BlockPos pos = useOnContext.getClickedPos();
                 pokemon.sendOut(serverLevel, new Vec3(pos.getX(), pos.getY(), pos.getZ()), null, (pokemonEntity -> {
                     storge.wandData().flags().flatMap(WandData.Flags::statue).ifPresent((statue) -> {
+                        if (statue
+                                && player instanceof ServerPlayer serverPlayer
+                                && !CobbleWandPermissionService.hasPermission(serverPlayer, CobbleWandPermissions.STATUE_SET)) {
+                            CobbleWandPermissionService.sendDeniedMessage(serverPlayer, CobbleWandPermissions.STATUE_SET);
+                            return;
+                        }
+
                         if (statue) {
                             pokemonEntity.setNoAi(true);
                             pokemonEntity.setPersistenceRequired();
                             UncatchableProperty.INSTANCE.uncatchable().apply(pokemon);
                             pokemonEntity.noPhysics = true;
-                            AspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemonEntity.getPokemon());
+                            var aspect = AspectPropertyType.INSTANCE.fromString("is_statue");
+                            if (aspect != null) {
+                                aspect.apply(pokemonEntity.getPokemon());
+                            }
                         } else {
                             pokemonEntity.setNoAi(false);
                             UncatchableProperty.INSTANCE.catchable().apply(pokemon);
                             pokemonEntity.noPhysics = false;
-                            UnaspectPropertyType.INSTANCE.fromString("is_statue").apply(pokemonEntity.getPokemon());
+                            var unaspect = UnaspectPropertyType.INSTANCE.fromString("is_statue");
+                            if (unaspect != null) {
+                                unaspect.apply(pokemonEntity.getPokemon());
+                            }
                         }
                     });
 
                     storge.wandData().flags().flatMap(WandData.Flags::canBattle).ifPresent((canBattle) -> {
                         if (!canBattle) {
-                            UnaspectPropertyType.INSTANCE.fromString("cant_battle").apply(pokemonEntity.getPokemon());
+                            var unaspect = UnaspectPropertyType.INSTANCE.fromString("cant_battle");
+                            if (unaspect != null) {
+                                unaspect.apply(pokemonEntity.getPokemon());
+                            }
                             pokemonEntity.getEntityData().set(PokemonEntity.Companion.getHIDE_LABEL(), true);
                         } else {
-                            AspectPropertyType.INSTANCE.fromString("cant_battle").apply(pokemonEntity.getPokemon());
+                            var aspect = AspectPropertyType.INSTANCE.fromString("cant_battle");
+                            if (aspect != null) {
+                                aspect.apply(pokemonEntity.getPokemon());
+                            }
                             pokemonEntity.getEntityData().set(PokemonEntity.Companion.getHIDE_LABEL(), false);
                         }
                     });
@@ -100,7 +123,7 @@ public class CobbleWandItem extends Item {
             }
         } else {
             if (level.isClientSide) {
-                CobbleWandClientPlatform.openWandScreen(storge.wandData());
+                NetworkManager.sendToServer(new OpenWandMenuRequestPacket());
             }
         }
         return InteractionResult.SUCCESS;
