@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class SuggestionEditBox extends EditBox {
-    private final List<String> allSuggestions;
+    private List<String> allSuggestions;
     private List<String> filtered = List.of();
 
     public SuggestionEditBox(Font font,
@@ -20,6 +20,11 @@ public class SuggestionEditBox extends EditBox {
 
         super(font, x, y, width, height, message);
         this.allSuggestions = suggestions;
+    }
+
+    public void setSuggestions(List<String> suggestions) {
+        this.allSuggestions = suggestions;
+        updateSuggestions();
     }
 
     private void updateSuggestions() {

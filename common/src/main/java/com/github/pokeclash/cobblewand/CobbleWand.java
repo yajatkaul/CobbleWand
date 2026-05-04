@@ -3,12 +3,11 @@ package com.github.pokeclash.cobblewand;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.events.battles.BattleStartedEvent;
-import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
-import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.creative.CobbleWandTab;
 import com.github.pokeclash.cobblewand.item.CobbleWandItems;
 import com.github.pokeclash.cobblewand.network.server.CobbleWandNetworkHandlerServer;
+import com.github.pokeclash.cobblewand.permission.CobbleWandPermissionService;
 import dev.architectury.event.events.common.LifecycleEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +27,7 @@ public final class CobbleWand {
         CobbleWandNetworkHandlerServer.register();
         LifecycleEvent.SERVER_STARTED.register((server) -> {
             minecraftServer = server;
+            CobbleWandPermissionService.registerBukkitPermissions();
         });
 
         CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.NORMAL, CobbleWand::battlePre);

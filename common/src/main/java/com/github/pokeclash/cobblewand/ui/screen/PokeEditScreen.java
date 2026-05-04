@@ -22,12 +22,12 @@ import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
+import com.github.pokeclash.cobblewand.network.bridge.CobbleWandNetworkBridge;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonAddPacket;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonEditPacket;
 import com.github.pokeclash.cobblewand.ui.util.FloatEditBox;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
 import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
-import dev.architectury.networking.NetworkManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
@@ -43,6 +43,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class PokeEditScreen extends Screen {
     private final int BASE_WIDTH = 349;
@@ -138,10 +139,7 @@ public class PokeEditScreen extends Screen {
                 guiX + 73,
                 guiY + 51,
                 "Ability",
-                Abilities.all()
-                        .stream()
-                        .map(AbilityTemplate::getName)
-                        .toList()
+                getAbilitySuggestions(showPokemon)
         );
 
         genderField = makeSuggestionEditBox(
@@ -257,6 +255,7 @@ public class PokeEditScreen extends Screen {
         ).bounds(guiX + 155, guiY + 190, 80, 20).build());
 
         setPokemonBasic(false);
+        refreshAbilitySuggestions();
 
         RenderablePokemon renderablePokemon = showPokemon.asRenderablePokemon();
         modelWidget = new ModelWidget(guiX - 20, guiY + 57, PORTRAIT_SIZE, PORTRAIT_SIZE, renderablePokemon, 3f, 325f, -10.0);
@@ -284,7 +283,7 @@ public class PokeEditScreen extends Screen {
 
     private void addToParty(Button button) {
         setPokeball(true);
-        NetworkManager.sendToServer(new PokemonAddPacket(pokemon));
+        CobbleWandNetworkBridge.sendToServer(new PokemonAddPacket(pokemon));
     }
 
     @Override
@@ -366,7 +365,7 @@ public class PokeEditScreen extends Screen {
 
         if (!abilityField.getValue().isEmpty()) {
             AbilityTemplate abilityTemplate = Abilities.get(abilityField.getValue());
-            if (abilityTemplate != null) {
+            if (abilityTemplate != null && isAllowedAbility(pokemon, abilityTemplate.getName())) {
                 Ability ability = abilityTemplate.create(new CompoundTag());
                 pokemon.updateAbility(ability);
             }
@@ -408,7 +407,7 @@ public class PokeEditScreen extends Screen {
 
         if (set) {
             WandData newWandData = createWandData();
-            NetworkManager.sendToServer(new PokemonEditPacket(pokemon, newWandData, uuid));
+            CobbleWandNetworkBridge.sendToServer(new PokemonEditPacket(pokemon, newWandData, uuid));
         }
     }
 
@@ -589,6 +588,30 @@ public class PokeEditScreen extends Screen {
             pokemon.setForcedAspects(Set.of());
             showPokemon.setForcedAspects(Set.of());
         }
+
+        refreshAbilitySuggestions();
+    }
+
+    private void refreshAbilitySuggestions() {
+        List<String> abilities = getAbilitySuggestions(showPokemon);
+        abilityField.setSuggestions(abilities);
+
+        String selectedAbility = abilityField.getValue();
+        if (!selectedAbility.isEmpty() && abilities.stream().noneMatch(a -> a.equalsIgnoreCase(selectedAbility))) {
+            abilityField.setValue("");
+        }
+    }
+
+    private List<String> getAbilitySuggestions(Pokemon pokemon) {
+        return StreamSupport.stream(pokemon.getForm().getAbilities().spliterator(), false)
+                .map(ability -> ability.getTemplate().getName())
+                .distinct()
+                .toList();
+    }
+
+    private boolean isAllowedAbility(Pokemon pokemon, String abilityName) {
+        return getAbilitySuggestions(pokemon).stream()
+                .anyMatch(name -> name.equalsIgnoreCase(abilityName));
     }
 
     private void setMoves(Pokemon pokemon) {
