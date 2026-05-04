@@ -3,6 +3,7 @@ package com.github.pokeclash.cobblewand.network.server.handler;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
 import com.github.pokeclash.cobblewand.item.CobbleWandItems;
+import com.github.pokeclash.cobblewand.network.bridge.CobbleWandNetworkBridge;
 import com.github.pokeclash.cobblewand.network.server.packet.OpenWandMenuPacket;
 import com.github.pokeclash.cobblewand.network.server.packet.OpenWandMenuRequestPacket;
 import com.github.pokeclash.cobblewand.permission.CobbleWandPermissionService;
@@ -26,8 +27,11 @@ public class OpenWandMenuRequestHandler {
         if (!mainHand.is(CobbleWandItems.COBBLEWAND.get())) {
             return;
         }
+        if (!CobbleWandNetworkBridge.canSendOpenWandMenuPacket()) {
+            return;
+        }
 
         PokemonStorage storage = mainHand.getOrDefault(CobbleWandComponents.POKEMON_STORAGE.get(), PokemonStorage.defaultStorage());
-        NetworkManager.sendToPlayer(serverPlayer, new OpenWandMenuPacket(storage.wandData()));
+        CobbleWandNetworkBridge.sendOpenWandMenuToPlayer(serverPlayer, new OpenWandMenuPacket(storage.wandData()));
     }
 }

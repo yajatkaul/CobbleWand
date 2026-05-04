@@ -24,6 +24,10 @@ public class PokemonAddHandler {
                 CobbleWandPermissionService.sendDeniedMessage(serverPlayer, CobbleWandPermissions.PARTY_ADD);
                 return;
             }
+            if (!CobbleWandPermissionService.hasPermission(serverPlayer, CobbleWandPermissions.MENU_OPEN)) {
+                CobbleWandPermissionService.sendDeniedMessage(serverPlayer, CobbleWandPermissions.MENU_OPEN);
+                return;
+            }
 
             PokemonProperties properties = pokemonAddPacket.pokemon().createPokemonProperties(PokemonPropertyExtractor.ALL);
             Pokemon pokemon = properties.create();

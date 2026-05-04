@@ -8,12 +8,12 @@ import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.component.CobbleWandComponents;
 import com.github.pokeclash.cobblewand.component.utils.PokemonStorage;
+import com.github.pokeclash.cobblewand.network.bridge.CobbleWandNetworkBridge;
 import com.github.pokeclash.cobblewand.network.server.packet.OpenWandMenuRequestPacket;
 import com.github.pokeclash.cobblewand.platform.CobbleWandClientPlatform;
 import com.github.pokeclash.cobblewand.permission.CobbleWandPermissionService;
 import com.github.pokeclash.cobblewand.permission.CobbleWandPermissions;
 import kotlin.Unit;
-import dev.architectury.networking.NetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -42,7 +42,7 @@ public class CobbleWandItem extends Item {
         }
 
         if (level.isClientSide) {
-            NetworkManager.sendToServer(new OpenWandMenuRequestPacket());
+            openWandScreenLocal(stack);
             return InteractionResultHolder.success(stack);
         }
 
@@ -123,10 +123,17 @@ public class CobbleWandItem extends Item {
             }
         } else {
             if (level.isClientSide) {
-                NetworkManager.sendToServer(new OpenWandMenuRequestPacket());
+                openWandScreenLocal(stack);
             }
         }
         return InteractionResult.SUCCESS;
+    }
+
+    private static void openWandScreenLocal(ItemStack stack) {
+        PokemonStorage storage = stack.getOrDefault(CobbleWandComponents.POKEMON_STORAGE.get(), PokemonStorage.defaultStorage());
+        CobbleWandClientPlatform.openWandScreen(storage.wandData());
+        // Keep this C2S ping for servers that still support menu-open permission feedback.
+        CobbleWandNetworkBridge.sendToServer(new OpenWandMenuRequestPacket());
     }
 
     @Override

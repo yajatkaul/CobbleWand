@@ -35,6 +35,10 @@ public class PokemonEditHandler {
             CobbleWandPermissionService.sendDeniedMessage(serverPlayer, CobbleWandPermissions.POKEMON_SET);
             return;
         }
+        if (!CobbleWandPermissionService.hasPermission(serverPlayer, CobbleWandPermissions.MENU_OPEN)) {
+            CobbleWandPermissionService.sendDeniedMessage(serverPlayer, CobbleWandPermissions.MENU_OPEN);
+            return;
+        }
 
         if (pokemonEditPacket.wandData().flags().flatMap(WandData.Flags::statue).isPresent()
                 && !CobbleWandPermissionService.hasPermission(serverPlayer, CobbleWandPermissions.STATUE_SET)) {

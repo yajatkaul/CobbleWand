@@ -22,12 +22,12 @@ import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import com.github.pokeclash.cobblewand.codec.WandData;
 import com.github.pokeclash.cobblewand.mixin.PokemonAccessor;
 import com.github.pokeclash.cobblewand.mixin.TeraTypesAccessor;
+import com.github.pokeclash.cobblewand.network.bridge.CobbleWandNetworkBridge;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonAddPacket;
 import com.github.pokeclash.cobblewand.network.server.packet.PokemonSetPacket;
 import com.github.pokeclash.cobblewand.ui.util.FloatEditBox;
 import com.github.pokeclash.cobblewand.ui.util.NumericEditBox;
 import com.github.pokeclash.cobblewand.ui.util.SuggestionEditBox;
-import dev.architectury.networking.NetworkManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
@@ -42,6 +42,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class CobbleWandScreen extends Screen {
     private final int BASE_WIDTH = 349;
@@ -282,7 +283,7 @@ public class CobbleWandScreen extends Screen {
 
     private void addToParty(Button button) {
         setPokeball(true);
-        NetworkManager.sendToServer(new PokemonAddPacket(startPokemon));
+        CobbleWandNetworkBridge.sendToServer(new PokemonAddPacket(startPokemon));
     }
 
     @Override
@@ -404,7 +405,7 @@ public class CobbleWandScreen extends Screen {
 
         if (set) {
             WandData newWandData = createWandData();
-            NetworkManager.sendToServer(new PokemonSetPacket(startPokemon, newWandData));
+            CobbleWandNetworkBridge.sendToServer(new PokemonSetPacket(startPokemon, newWandData));
         }
     }
 
@@ -648,8 +649,8 @@ public class CobbleWandScreen extends Screen {
     }
 
     private List<String> getAbilitySuggestions(Pokemon pokemon) {
-        return pokemon.getForm().getAbilities().stream()
-                .map(AbilityTemplate::getName)
+        return StreamSupport.stream(pokemon.getForm().getAbilities().spliterator(), false)
+                .map(ability -> ability.getTemplate().getName())
                 .distinct()
                 .toList();
     }
